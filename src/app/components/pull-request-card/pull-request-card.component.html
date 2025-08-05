@@ -1,0 +1,153 @@
+<div
+  class="pull-request-card clickable"
+  [style.border-left-color]="getRepositoryColor(pullRequest.repository.name)"
+  [style.border-left-width]="'4px'"
+  (click)="onPullRequestClick()"
+  title="Click to open in Azure DevOps"
+>
+  <div class="pr-header">
+    <h3 class="pr-title">{{ pullRequest.title }}</h3>
+    <div class="pr-actions">
+      <button
+        class="teams-btn"
+        (click)="onTeamsClick($event)"
+        title="Copy PR message to clipboard and open Teams channel"
+      >
+        Post
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 16 16"
+          fill="white"
+        >
+          <g fill="currentColor">
+            <path
+              d="M10.768 4.112A2.114 2.114 0 018.65 6.226a2.114 2.114 0 01-2.116-2.112C6.535 2.946 7.482 2 8.65 2s2.117.946 2.117 2.112zM13.21 6.225c.808 0 1.464-.655 1.464-1.462 0-.808-.655-1.463-1.465-1.463a1.464 1.464 0 100 2.925zM14.381 6.875c.342 0 .619.276.619.617v3.288a2.272 2.272 0 01-2.274 2.27h-.01c-.346 0-.673-.077-.966-.214A3.673 3.673 0 018.488 15a3.669 3.669 0 01-3.581-3.75h1.475V6.875h8z"
+            />
+            <path
+              fill-rule="evenodd"
+              d="M7.566 4.925h-5.97A.596.596 0 001 5.521v5.958c0 .33.267.596.597.596h5.969c.33 0 .597-.267.597-.596V5.521a.596.596 0 00-.597-.596zM4.959 7.193h1.193v-.63H3.011v.63h1.188v3.243h.76V7.193z"
+              clip-rule="evenodd"
+            />
+          </g>
+        </svg>
+      </button>
+      <span class="pr-id">#{{ pullRequest.pullRequestId }}</span>
+    </div>
+  </div>
+
+  <div class="pr-details">
+    <div class="pr-meta">
+      <span class="pr-author">
+        <strong>Author:</strong> {{ pullRequest.createdBy.displayName }}
+      </span>
+      <span class="pr-date">
+        <strong>Created:</strong> {{ formatDate(pullRequest.creationDate) }}
+      </span>
+      <span class="pr-repository">
+        <strong>Repository:</strong>
+        <span
+          class="repo-name"
+          [style.background-color]="
+            getRepositoryLightColor(pullRequest.repository.name)
+          "
+          [style.color]="getRepositoryColor(pullRequest.repository.name)"
+          [style.border]="
+            '1px solid ' + getRepositoryColor(pullRequest.repository.name)
+          "
+        >
+          {{ pullRequest.repository.name }}
+        </span>
+      </span>
+    </div>
+
+    <div class="pr-status-section">
+      <div class="pr-status-items">
+        <span
+          class="pr-merge"
+          [ngClass]="getMergeStatus(pullRequest).class"
+          [title]="getMergeDetails(pullRequest)"
+        >
+          <span class="status-indicator">
+            <span
+              class="status-dot merge-dot"
+              [ngClass]="getMergeStatus(pullRequest).class"
+            ></span>
+            <strong>Merge:</strong>
+          </span>
+          {{ getMergeStatus(pullRequest).label }}
+        </span>
+        <span
+          class="pr-comments"
+          [ngClass]="getCommentStatus(pullRequest).class"
+          [title]="getCommentDetails(pullRequest)"
+        >
+          <span class="status-indicator">
+            <span
+              class="status-dot comment-dot"
+              [ngClass]="getCommentStatus(pullRequest).class"
+            ></span>
+            <strong>Comments:</strong>
+          </span>
+          {{ getCommentStatus(pullRequest).label }}
+        </span>
+        <span class="pr-review" [ngClass]="getReviewStatus(pullRequest).class">
+          <span class="status-indicator">
+            <span
+              class="status-dot review-dot"
+              [ngClass]="getReviewStatus(pullRequest).class"
+            ></span>
+            <strong>Review:</strong>
+          </span>
+          {{ getReviewStatus(pullRequest).label }}
+        </span>
+      </div>
+    </div>
+
+    <div class="pr-branches">
+      <span class="branch source">{{
+        getBranchName(pullRequest.sourceRefName)
+      }}</span>
+      <span class="arrow">→</span>
+      <span class="branch target">{{
+        getBranchName(pullRequest.targetRefName)
+      }}</span>
+    </div>
+
+    @if (cleanDescription(pullRequest.description)) {
+    <div class="pr-description">
+      <strong>Description:</strong>
+      <p>{{ cleanDescription(pullRequest.description) }}</p>
+    </div>
+    } @if (getRelatedPullRequests(pullRequest).length > 0) {
+    <div class="pr-related">
+      <strong>Potentially Related:</strong>
+      <div class="related-prs">
+        @for (relatedPr of getRelatedPullRequests(pullRequest); track
+        relatedPr.pullRequestId) {
+        <div
+          class="related-pr-item"
+          (click)="onRelatedPullRequestClick(relatedPr, $event)"
+          title="Click to open {{ relatedPr.title }} in {{
+            relatedPr.repository.name
+          }}"
+        >
+          <span
+            class="related-repo-dot"
+            [style.background-color]="
+              getRepositoryColor(relatedPr.repository.name)
+            "
+          ></span>
+          <div class="related-pr-content">
+            <span class="related-pr-title">{{ relatedPr.title }}</span>
+            <span class="related-pr-repo">{{ relatedPr.repository.name }}</span>
+          </div>
+          <span class="related-pr-id">#{{ relatedPr.pullRequestId }}</span>
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
+</div>

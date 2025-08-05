@@ -1,0 +1,60 @@
+@if (pullRequests.length > 0) {
+<div class="summary">
+  <div class="summary-header">
+    <h2>Summary</h2>
+    <div class="summary-controls">
+      <button (click)="onRefresh()" [disabled]="isLoading" class="refresh-btn">
+        {{ isLoading ? "Loading..." : "Refresh" }}
+      </button>
+    </div>
+  </div>
+  <div class="project-counts">
+    @for (item of projectSummary; track item.project) {
+    <div
+      class="project-count"
+      [class.selected]="isRepositorySelected(item.project)"
+      [class.disabled]="!hasActivePRs(item.project)"
+      (click)="onFilterByRepository(item.project)"
+    >
+      <div class="repo-indicator">
+        <div class="repo-header">
+          <span class="project-name">{{ item.project }}</span>
+          <button
+            class="create-pr-btn"
+            (click)="onOpenMyPullRequests(item.project, $event)"
+            title="View my pull requests for {{ item.project }}"
+          >
+            +
+          </button>
+        </div>
+        <div
+          class="repo-underline"
+          [style.background-color]="getRepositoryColor(item.project)"
+        ></div>
+      </div>
+      <span class="count"
+        >{{ item.count }} PR{{ item.count !== 1 ? "s" : "" }}</span
+      >
+    </div>
+    }
+  </div>
+  <div class="total-count">
+    <strong
+      >Total: {{ pullRequests.length }} active pull request{{
+        pullRequests.length !== 1 ? "s" : ""
+      }}</strong
+    >
+    @if (selectedRepositories.size > 0) {
+    <span class="filter-info">
+      (Showing {{ filteredPullRequests.length }} from
+      {{ selectedRepositories.size }} repo{{
+        selectedRepositories.size !== 1 ? "s" : ""
+      }}: {{ getSelectedRepositoriesText() }})
+      <button (click)="onClearFilter()" class="clear-filter-btn">
+        Clear Filter
+      </button>
+    </span>
+    }
+  </div>
+</div>
+}
