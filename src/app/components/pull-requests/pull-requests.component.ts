@@ -85,13 +85,10 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    console.log("PullRequestsComponent initialized");
-
     // Subscribe to projects changes only - PAT is handled automatically by ConfigStorageService
     this.subscriptions.add(
       this.configService.projects$.subscribe((projects) => {
         this.currentProjects = projects;
-        console.log("Projects updated:", this.currentProjects);
 
         if (this.currentProjects.length > 0) {
           this.loadPullRequests();
@@ -109,9 +106,7 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
 
     // Check if we need to show modals
     if (this.currentProjects.length === 0) {
-      console.log("No projects configured, opening add project modal");
       this.openAddProjectModal();
-      console.log("No PAT configured, prompting for PAT");
       this.promptForPAT(
         "No Personal Access Token configured. Please provide a valid PAT to access Azure DevOps."
       );
@@ -160,7 +155,6 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
       .getActivePullRequests(this.currentProjects)
       .subscribe({
         next: (response) => {
-          console.log("Pull requests loaded:", response);
           this.pullRequests = response.value || [];
           this.assignRepositoryColors();
           this.filteredPullRequests = [...this.pullRequests];
@@ -185,7 +179,6 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
         next: (suggestions) => {
           this.prSuggestions = suggestions;
           if (suggestions.length > 0) {
-            console.log("Found PR suggestions:", suggestions);
             // For each suggestion, log the branch that can create a PR
             suggestions.forEach((suggestion) => {
               const sourceBranch = suggestion.properties.sourceBranch.replace(
@@ -199,12 +192,8 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
               const projectName =
                 suggestion.properties.sourceRepository.project.name;
               const repoName = suggestion.properties.sourceRepository.name;
-              console.log(
-                `You can create a PR from branch "${sourceBranch}" to "${targetBranch}" in "${repoName}" (${projectName})`
-              );
             });
           } else {
-            console.log("No PR suggestions found");
           }
         },
         error: (error) => {
@@ -284,7 +273,6 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
   }
 
   onProjectsUpdated(projects: ProjectConfig[]) {
-    console.log("Projects updated:", projects);
     this.configService.updateProjects(projects);
     this.closeAddProjectModal();
 
@@ -303,7 +291,6 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
   }
 
   onPATUpdated(pat: string) {
-    console.log("PAT updated");
     this.configService.updatePAT(pat);
     this.closePATPromptModal();
     this.loadPullRequests();

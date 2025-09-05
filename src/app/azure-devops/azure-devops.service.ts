@@ -804,30 +804,6 @@ export class AzureDevOpsService {
           return [];
         }
 
-        // Log the suggestions for now
-        if (suggestions.length > 0) {
-          console.log(
-            `Found ${suggestions.length} PR suggestions for ${project}:`,
-            suggestions
-          );
-          suggestions.forEach((suggestion: PullRequestSuggestion) => {
-            const sourceBranch = suggestion.properties.sourceBranch.replace(
-              "refs/heads/",
-              ""
-            );
-            const targetBranch = suggestion.properties.targetBranch.replace(
-              "refs/heads/",
-              ""
-            );
-            const repoName = suggestion.properties.sourceRepository.name;
-            const projectName =
-              suggestion.properties.sourceRepository.project.name;
-            console.log(
-              `  ${sourceBranch} → ${targetBranch} in ${repoName} (${projectName})`
-            );
-          });
-        }
-
         return suggestions;
       }),
       catchError((error) => {

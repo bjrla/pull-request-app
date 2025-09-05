@@ -27,7 +27,6 @@ export class ConfigStorageService {
     this._pat$.subscribe((pat) => {
       if (pat) {
         this.azureDevOpsService.updateCurrentPAT(pat);
-        console.log("ConfigStorageService: Updated Azure DevOps service PAT");
       }
     });
   }
@@ -62,14 +61,7 @@ export class ConfigStorageService {
       if (stored) {
         const projects = JSON.parse(stored);
         this._projects$.next(projects);
-        console.log(
-          "ConfigStorageService: Loaded projects from storage:",
-          projects
-        );
       } else {
-        console.log(
-          "ConfigStorageService: No projects found in storage, using default config"
-        );
         this._projects$.next(AZURE_DEVOPS_CONFIG.projects);
       }
     } catch (error) {
@@ -86,11 +78,7 @@ export class ConfigStorageService {
       const stored = localStorage.getItem(this.PAT_STORAGE_KEY);
       if (stored) {
         this._pat$.next(stored);
-        console.log("ConfigStorageService: Loaded PAT from storage");
       } else {
-        console.log(
-          "ConfigStorageService: No PAT found in storage, using default config"
-        );
         this._pat$.next(AZURE_DEVOPS_CONFIG.pat);
       }
     } catch (error) {
@@ -107,7 +95,6 @@ export class ConfigStorageService {
     try {
       localStorage.setItem(this.PROJECTS_STORAGE_KEY, JSON.stringify(projects));
       this._projects$.next(projects);
-      console.log("ConfigStorageService: Projects updated:", projects);
     } catch (error) {
       console.error(
         "ConfigStorageService: Error saving projects to storage:",
@@ -120,7 +107,6 @@ export class ConfigStorageService {
     try {
       localStorage.setItem(this.PAT_STORAGE_KEY, pat);
       this._pat$.next(pat);
-      console.log("ConfigStorageService: PAT updated");
     } catch (error) {
       console.error(
         "ConfigStorageService: Error saving PAT to storage:",

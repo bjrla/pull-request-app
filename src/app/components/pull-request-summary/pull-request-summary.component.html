@@ -14,6 +14,7 @@
       class="project-count"
       [class.selected]="isRepositorySelected(item.project)"
       [class.disabled]="!hasActivePRs(item.project)"
+      [class.has-suggestions]="hasCreatePRSuggestions(item.project)"
       (click)="onFilterByRepository(item.project)"
     >
       <div class="repo-indicator">

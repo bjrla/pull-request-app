@@ -39,13 +39,21 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: flex-start; // Keep content aligned to top
       min-width: 120px;
+      min-height: 80px; // Ensure consistent minimum height
       cursor: pointer;
       transition: all 0.3s ease;
 
       &:hover:not(.disabled) {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      // When card has PR suggestions, keep normal layout
+      &.has-suggestions {
+        justify-content: flex-start;
+        align-items: center;
       }
 
       &.selected {
@@ -145,6 +153,19 @@
         font-weight: bold;
         font-size: 1.1rem;
         color: #323130;
+        margin-top: auto; // Push the count to fill remaining space
+        margin-bottom: auto; // Center it vertically in remaining space
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-grow: 1; // Take up remaining vertical space
+      }
+
+      // For cards with suggestions, don't let count grow
+      &.has-suggestions .count {
+        margin-top: 0;
+        margin-bottom: 0;
+        flex-grow: 0;
       }
 
       // PR Suggestions styles
