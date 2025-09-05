@@ -596,4 +596,66 @@ export class AzureDevOpsService {
       .get<any>(url, { headers })
       .pipe(catchError(this.handleHttpError<any>("getPullRequestMergeStatus")));
   }
+
+  // Method to fetch pipeline builds for a specific definition
+  getPipelineBuilds(
+    project: string,
+    definitionId: number,
+    count: number = 20,
+    branchName?: string
+  ): Observable<{ value: BuildResult[] }> {
+    let url = `${this.config.baseUrl}/${this.config.organization}/${project}/_apis/build/builds?definitions=${definitionId}&$top=${count}&api-version=7.0`;
+
+    // Add branch filter if specified
+    if (branchName) {
+      url += `&branchName=${encodeURIComponent(branchName)}`;
+    }
+
+    const headers = new HttpHeaders({
+      Authorization: `Basic ${btoa(":" + this.currentPAT)}`,
+      "Content-Type": "application/json",
+    });
+
+    return this.http
+      .get<{ value: BuildResult[] }>(url, { headers })
+      .pipe(
+        catchError(
+          this.handleHttpError<{ value: BuildResult[] }>("getPipelineBuilds")
+        )
+      );
+  }
+
+  // Method to fetch pipeline runs with stages for a specific definition
+  getPipelineRuns(
+    project: string,
+    definitionId: number,
+    count: number = 20
+  ): Observable<{ value: any[] }> {
+    const url = `${this.config.baseUrl}/${this.config.organization}/${project}/_apis/pipelines/${definitionId}/runs?$top=${count}&api-version=7.0`;
+
+    const headers = new HttpHeaders({
+      Authorization: `Basic ${btoa(":" + this.currentPAT)}`,
+      "Content-Type": "application/json",
+    });
+
+    return this.http
+      .get<{ value: any[] }>(url, { headers })
+      .pipe(
+        catchError(this.handleHttpError<{ value: any[] }>("getPipelineRuns"))
+      );
+  }
+
+  // Method to fetch timeline for a specific build (to get stage information)
+  getBuildTimeline(project: string, buildId: number): Observable<any> {
+    const url = `${this.config.baseUrl}/${this.config.organization}/${project}/_apis/build/builds/${buildId}/timeline?api-version=7.0`;
+
+    const headers = new HttpHeaders({
+      Authorization: `Basic ${btoa(":" + this.currentPAT)}`,
+      "Content-Type": "application/json",
+    });
+
+    return this.http
+      .get<any>(url, { headers })
+      .pipe(catchError(this.handleHttpError<any>("getBuildTimeline")));
+  }
 }

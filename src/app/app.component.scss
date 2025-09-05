@@ -1,9 +1,9 @@
-.azure-devops-container {
+.app-container {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
 
-  .header-section {
+  .app-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -19,46 +19,84 @@
       background-clip: text;
     }
 
-    .add-project-btn {
-      background: transparent;
-      color: #666;
-      border: 2px solid #e1e1e1;
-      padding: 0.75rem 1.5rem;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
+    .nav-buttons {
       display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      background: #fafafa;
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e8e8e8;
+      gap: 4px;
 
-      svg {
-        flex-shrink: 0;
-        fill: #666;
-      }
+      .nav-button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+        border: none;
+        padding: 12px 24px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #64748b;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 8px;
+        position: relative;
+        white-space: nowrap;
 
-      &:hover {
-        background: #f5f5f5;
-        border-color: #ccc;
-        color: #333;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-        svg {
-          fill: #333;
+        &:hover {
+          color: #334155;
+          background: rgba(59, 130, 246, 0.08);
+          transform: translateY(-1px);
         }
-      }
 
-      &:active {
-        transform: translateY(0);
-        background: #ebebeb;
+        &.active {
+          color: #1e40af;
+          background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+          box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.5);
+          border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        &.secondary {
+          color: #666;
+          border: 2px solid #e1e1e1;
+          background: transparent;
+          margin-left: 12px;
+
+          &:hover {
+            background: #f5f5f5;
+            border-color: #ccc;
+            color: #333;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          }
+
+          &:active {
+            transform: translateY(0);
+            background: #ebebeb;
+          }
+        }
+
+        &:focus {
+          outline: none;
+          box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
       }
     }
   }
 
-  .pull-requests {
-    display: grid;
-    gap: 1.5rem;
+  .app-content {
+    min-height: 400px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f1f5f9;
+    overflow: hidden;
+    padding: 1.5rem;
   }
 }
