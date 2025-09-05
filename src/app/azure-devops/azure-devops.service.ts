@@ -79,6 +79,41 @@ export interface PullRequestResponse {
   count: number;
 }
 
+export interface PullRequestSuggestion {
+  type: string;
+  properties: {
+    sourceRepository: {
+      id: string;
+      name: string;
+      url: string;
+      project: {
+        id: string;
+        name: string;
+        description: string;
+        url: string;
+        state: number;
+        revision: number;
+        visibility: number;
+        lastUpdateTime: string;
+      };
+      size: number;
+      remoteUrl: string;
+      sshUrl: string;
+      webUrl: string;
+      isDisabled: boolean;
+    };
+    sourceBranch: string;
+    targetRepositoryId: string;
+    targetBranch: string;
+    pushDate: string;
+  };
+}
+
+export interface SuggestionsResponse {
+  value?: PullRequestSuggestion[];
+  count?: number;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -91,6 +126,12 @@ export class AzureDevOpsService {
   public authError$ = this.authErrorSubject.asObservable();
 
   constructor(private http: HttpClient) {}
+
+  // Public method to update the current PAT
+  updateCurrentPAT(pat: string): void {
+    this.currentPAT = pat;
+    console.log("AzureDevOpsService: PAT updated");
+  }
 
   // Handle HTTP errors and emit authentication errors for 401 responses
   private handleHttpError<T>(operation = "operation") {
@@ -657,5 +698,147 @@ export class AzureDevOpsService {
     return this.http
       .get<any>(url, { headers })
       .pipe(catchError(this.handleHttpError<any>("getBuildTimeline")));
+  }
+
+  // Method to get pull request suggestions (branches that can create PRs)
+  getPullRequestSuggestions(
+    projects?: ProjectConfig[],
+    personalAccessToken?: string
+  ): Observable<PullRequestSuggestion[]> {
+    const projectsToUse = projects || this.config.projects;
+    if (personalAccessToken) {
+      this.currentPAT = personalAccessToken;
+    }
+
+    if (!projectsToUse || projectsToUse.length === 0) {
+      console.warn("No projects configured for PR suggestions");
+      return of([]);
+    }
+
+    const requests = projectsToUse.map((projectConfig) => {
+      if (!projectConfig || !projectConfig.name) {
+        console.warn("Invalid project config:", projectConfig);
+        return of([]);
+      }
+
+      if (projectConfig.repository) {
+        // First get the repository ID from the repository name
+        return this.getRepositoryId(
+          projectConfig.name,
+          projectConfig.repository
+        ).pipe(
+          switchMap((repositoryId) => {
+            if (repositoryId) {
+              return this.getPullRequestSuggestionsForRepository(
+                projectConfig.name,
+                repositoryId
+              );
+            }
+            return of([]);
+          })
+        );
+      }
+      // For projects without specific repository, skip for now
+      return of([]);
+    });
+
+    return forkJoin(requests).pipe(
+      map((responses) => {
+        const allSuggestions: PullRequestSuggestion[] = [];
+        responses.forEach((suggestions) => {
+          allSuggestions.push(...suggestions);
+        });
+        return allSuggestions;
+      }),
+      catchError(
+        this.handleHttpError<PullRequestSuggestion[]>(
+          "getPullRequestSuggestions"
+        )
+      )
+    );
+  }
+
+  private getRepositoryId(
+    project: string,
+    repositoryName: string
+  ): Observable<string | null> {
+    const url = `${this.config.baseUrl}/${this.config.organization}/${project}/_apis/git/repositories?api-version=7.0`;
+
+    const headers = new HttpHeaders({
+      Authorization: `Basic ${btoa(":" + this.currentPAT)}`,
+      "Content-Type": "application/json",
+    });
+
+    return this.http.get<{ value: any[] }>(url, { headers }).pipe(
+      map((response) => {
+        const repo = response.value?.find((r) => r.name === repositoryName);
+        return repo ? repo.id : null;
+      }),
+      catchError((error) => {
+        console.error(
+          `Error fetching repository ID for ${repositoryName} in project ${project}:`,
+          error
+        );
+        return this.handleHttpError<string | null>("getRepositoryId")(error);
+      })
+    );
+  }
+
+  private getPullRequestSuggestionsForRepository(
+    project: string,
+    repositoryId: string
+  ): Observable<PullRequestSuggestion[]> {
+    const url = `${this.config.baseUrl}/${this.config.organization}/_apis/git/repositories/${repositoryId}/suggestions?api-version=5.0-preview.1`;
+
+    const headers = new HttpHeaders({
+      Authorization: `Basic ${btoa(":" + this.currentPAT)}`,
+      "Content-Type": "application/json",
+      Accept:
+        "application/json;api-version=5.0-preview.1;excludeUrls=true;enumsAsNumbers=true;msDateFormat=true;noArrayWrap=true",
+    });
+
+    return this.http.get<PullRequestSuggestion[]>(url, { headers }).pipe(
+      map((suggestions) => {
+        // The response is directly an array of suggestions
+        if (!suggestions || !Array.isArray(suggestions)) {
+          return [];
+        }
+
+        // Log the suggestions for now
+        if (suggestions.length > 0) {
+          console.log(
+            `Found ${suggestions.length} PR suggestions for ${project}:`,
+            suggestions
+          );
+          suggestions.forEach((suggestion: PullRequestSuggestion) => {
+            const sourceBranch = suggestion.properties.sourceBranch.replace(
+              "refs/heads/",
+              ""
+            );
+            const targetBranch = suggestion.properties.targetBranch.replace(
+              "refs/heads/",
+              ""
+            );
+            const repoName = suggestion.properties.sourceRepository.name;
+            const projectName =
+              suggestion.properties.sourceRepository.project.name;
+            console.log(
+              `  ${sourceBranch} → ${targetBranch} in ${repoName} (${projectName})`
+            );
+          });
+        }
+
+        return suggestions;
+      }),
+      catchError((error) => {
+        console.error(
+          `Error fetching PR suggestions from repository ${repositoryId} in project ${project}:`,
+          error
+        );
+        return this.handleHttpError<PullRequestSuggestion[]>(
+          "getPullRequestSuggestionsForRepository"
+        )(error);
+      })
+    );
   }
 }

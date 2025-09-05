@@ -10,6 +10,7 @@
     [selectedRepositories]="selectedRepositories"
     [isLoading]="isLoading"
     [projectSummary]="getProjectSummary()"
+    [suggestions]="prSuggestions"
     (refreshRequested)="loadPullRequests()"
     (repositoryFilterChanged)="onRepositorySelectionChanged($event)"
     (filterCleared)="clearFilter()"
@@ -42,7 +43,6 @@
 <app-manage-projects-modal
   [isOpen]="isAddProjectModalOpen"
   [currentProjects]="currentProjects"
-  [currentPAT]="currentPAT"
   (closeModal)="closeAddProjectModal()"
   (projectAdded)="onProjectAdded($event)"
   (projectRemoved)="onProjectRemoved($event)"

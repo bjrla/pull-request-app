@@ -1,487 +1,248 @@
-<div class="pipeline-builds-container">
-  <div class="header-section">
-    <h2>Master Branch - Pipeline Builds Since Last Deploy to Production</h2>
-    <div class="pipeline-info">
-      <span class="pipeline-name">{{
-        builds.length > 0 ? builds[0].definition.name : "Loading pipeline..."
-      }}</span>
-      <a
-        [href]="getAzureDevOpsUrl()"
-        target="_blank"
-        class="pipeline-link"
-        [class.disabled]="builds.length === 0"
-      >
-        View in Azure DevOps
-      </a>
-    </div>
-    <button
-      class="refresh-btn"
-      (click)="loadPipelineBuilds()"
-      [disabled]="isLoading"
-      type="button"
+<div class="pipeline-builds-container"></div>
+<div class="header-section">
+  <h2>Master Branch - Pipeline Builds Since Last Deploy to Production</h2>
+  <div class="pipeline-info">
+    <span class="pipeline-name">{{
+      builds.length > 0 ? builds[0].definition.name : "Loading pipeline..."
+    }}</span>
+    <a
+      [href]="getAzureDevOpsUrl()"
+      target="_blank"
+      class="pipeline-link"
+      [class.disabled]="builds.length === 0"
     >
-      <svg
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M4 4V9H4.582M4.582 9C5.24585 7.35812 6.43568 5.9829 7.96503 5.08985C9.49438 4.1968 11.2768 3.8379 13.033 4.06532C14.7891 4.29274 16.4198 5.09676 17.6694 6.35377C18.919 7.61079 19.7168 9.24692 19.9382 11.0064C20.1596 12.7659 19.7936 14.5463 18.8943 16.0711C17.995 17.5958 16.6059 18.7795 14.9581 19.4351C13.3103 20.0907 11.4956 20.1789 9.79471 19.6877C8.09382 19.1965 6.59716 18.1555 5.5 16.7M4.582 9H9"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-      Refresh
-    </button>
+      View in Azure DevOps
+    </a>
   </div>
+  <button
+    class="refresh-btn"
+    (click)="loadPipelineBuilds()"
+    [disabled]="isLoading"
+    type="button"
+  >
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M4 4V9H4.582M4.582 9C5.24585 7.35812 6.43568 5.9829 7.96503 5.08985C9.49438 4.1968 11.2768 3.8379 13.033 4.06532C14.7891 4.29274 16.4198 5.09676 17.6694 6.35377C18.919 7.61079 19.7168 9.24692 19.9382 11.0064C20.1596 12.7659 19.7936 14.5463 18.8943 16.0711C17.995 17.5958 16.6059 18.7795 14.9581 19.4351C13.3103 20.0907 11.4956 20.1789 9.79471 19.6877C8.09382 19.1965 6.59716 18.1555 5.5 16.7M4.582 9H9"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+    Refresh
+  </button>
+</div>
 
-  @if (error) {
-  <app-error-message [message]="error"></app-error-message>
-  } @if (isLoading) {
-  <app-loading></app-loading>
-  } @if (!isLoading && !error && builds.length === 0) {
-  <app-no-data
-    message="No pipeline builds found since last production deploy."
-  ></app-no-data>
-  } @if (!isLoading && !error && builds.length > 0) {
-  <div class="builds-list">
-    @for (build of builds; track build.id) {
-    <div class="build-card" [class]="getBuildStatusClass(build)">
-      <div class="build-header">
-        <div class="build-info">
-          <span class="build-number">{{ build.buildNumber }}</span>
-          <span class="build-branch">{{
-            getBranchName(build.sourceBranch)
-          }}</span>
-        </div>
-        <div class="build-status">
-          <span
-            class="status-badge"
-            [class]="getStatusClass(build.status, build.result)"
-          >
-            {{ getStatusText(build.status, build.result) }}
-          </span>
-          <span class="build-time">{{ formatBuildTime(build) }}</span>
-        </div>
+@if (error) {
+<app-error-message [message]="error"></app-error-message>
+} @if (isLoading) {
+<app-loading></app-loading>
+} @if (!isLoading && !error && builds.length === 0) {
+<app-no-data
+  message="No pipeline builds found since last production deploy."
+></app-no-data>
+} @if (!isLoading && !error && builds.length > 0) {
+<div class="builds-list">
+  @for (build of builds; track build.id) {
+  <div class="build-card" [class]="getBuildStatusClass(build)">
+    <div class="build-header">
+      <div class="build-info">
+        <span class="build-number">{{ build.buildNumber }}</span>
+        <span class="build-branch">{{
+          getBranchName(build.sourceBranch)
+        }}</span>
       </div>
+      <div class="build-status">
+        <span
+          class="status-badge"
+          [class]="getStatusClass(build.status, build.result)"
+        >
+          {{ getStatusText(build.status, build.result) }}
+        </span>
+        <span class="build-time">{{ formatBuildTime(build) }}</span>
+      </div>
+    </div>
 
-      @if (build.stages && build.stages.length > 0) {
-      <div class="stages-container">
-        <h4>Pipeline Stages (Real Azure DevOps Timeline Data):</h4>
-        <div class="stages-list">
-          @for (stage of build.stages; track stage.name) {
-          <div class="stage" [class]="getStageStatusClass(stage)">
-            <div class="stage-info">
-              <div class="stage-name">{{ stage.name }}</div>
-              <div class="stage-status">
-                {{ getStageStatusText(stage) }}
-              </div>
-              @if (stage.startTime && stage.finishTime) {
-              <div class="stage-duration">{{ getStageTime(stage) }}</div>
-              }
+    @if (build.stages && build.stages.length > 0) {
+    <div class="stages-container">
+      <h4>Pipeline Stages:</h4>
+      <div class="stages-list">
+        @for (stage of build.stages; track stage.name) {
+        <div
+          class="stage clickable"
+          [class]="getStageStatusClass(stage)"
+          (click)="onStageClick(build, stage)"
+          title="Click to view stage in Azure DevOps"
+        >
+          <div class="stage-info">
+            <div class="stage-name">
+              {{ stage.name }}
+              <svg
+                class="clickable-icon"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <path
+                  d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <polyline
+                  points="15,3 21,3 21,9"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <line
+                  x1="10"
+                  y1="14"
+                  x2="21"
+                  y2="3"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+            <div class="stage-status">
+              {{ getStageStatusText(stage) }}
+            </div>
+            @if (stage.startTime && stage.finishTime) {
+            <div class="stage-duration">{{ getStageTime(stage) }}</div>
+            }
 
-              <!-- Show real stage timeline details -->
-              @if (stage.details) {
-              <div class="stage-timeline-info">
-                @if (stage.details.id) {
-                <div class="stage-detail">
-                  <strong>Stage ID:</strong> {{ stage.details.id }}
-                </div>
-                } @if (stage.details.identifier) {
-                <div class="stage-detail">
-                  <strong>Identifier:</strong> {{ stage.details.identifier }}
-                </div>
-                } @if (stage.details.parentId) {
-                <div class="stage-detail">
-                  <strong>Parent ID:</strong> {{ stage.details.parentId }}
-                </div>
-                } @if (stage.details.queueId) {
-                <div class="stage-detail">
-                  <strong>Queue ID:</strong> {{ stage.details.queueId }}
-                </div>
-                } @if (stage.details.workerName) {
-                <div class="stage-detail">
-                  <strong>Worker:</strong> {{ stage.details.workerName }}
-                </div>
-                } @if (stage.details.agentName) {
-                <div class="stage-detail">
-                  <strong>Agent:</strong> {{ stage.details.agentName }}
-                </div>
-                } @if (stage.details.attempt) {
-                <div class="stage-detail">
-                  <strong>Attempt:</strong> {{ stage.details.attempt }}
-                </div>
-                } @if (stage.details.percentComplete !== undefined) {
-                <div class="stage-detail">
-                  <strong>Progress:</strong>
-                  {{ stage.details.percentComplete }}%
-                </div>
-                } @if (stage.details.environment) {
-                <div class="stage-detail">
-                  <strong>Environment:</strong>
-                  {{ stage.details.environment.name }} (ID:
-                  {{ stage.details.environment.id }})
-                </div>
-                } @if (stage.details.refName) {
-                <div class="stage-detail">
-                  <strong>Ref Name:</strong> {{ stage.details.refName }}
-                </div>
-                } @if (stage.details.requestedFor) {
-                <div class="stage-detail">
-                  <strong>Requested For:</strong>
-                  {{ stage.details.requestedFor.displayName }}
-                </div>
-                } @if (stage.details.changeId) {
-                <div class="stage-detail">
-                  <strong>Change ID:</strong> {{ stage.details.changeId }}
-                </div>
-                } @if (stage.details.lastModified) {
-                <div class="stage-detail">
-                  <strong>Last Modified:</strong>
-                  {{ stage.details.lastModified | date : "medium" }}
-                </div>
-                } @if (stage.details.errorCount && stage.details.errorCount > 0)
-                {
-                <div class="stage-detail errors">
-                  <strong>Errors:</strong> {{ stage.details.errorCount }}
-                </div>
-                } @if (stage.details.warningCount && stage.details.warningCount
-                > 0) {
-                <div class="stage-detail warnings">
-                  <strong>Warnings:</strong> {{ stage.details.warningCount }}
-                </div>
-                } @if (stage.details.issues && stage.details.issues.length > 0)
-                {
-                <div class="stage-detail issues">
-                  <strong>Issues:</strong> {{ stage.details.issues.length }}
-                </div>
-                } @if (stage.details.previousAttempts &&
-                stage.details.previousAttempts.length > 0) {
-                <div class="stage-detail">
-                  <strong>Previous Attempts:</strong>
-                  {{ stage.details.previousAttempts.length }}
-                </div>
-                } @if (stage.details.log && stage.details.log.url) {
-                <div class="stage-detail">
-                  <strong>Log:</strong>
-                  <a [href]="stage.details.log.url" target="_blank"
-                    >View Log (ID: {{ stage.details.log.id }})</a
-                  >
-                </div>
-                } @if (stage.details.variables &&
-                getObjectKeysLength(stage.details.variables) > 0) {
-                <div class="stage-detail">
-                  <strong>Variables:</strong>
-                  {{ getObjectKeysLength(stage.details.variables) }} defined
-                  <details class="variables-details">
-                    <summary>Show Variables</summary>
-                    <div class="variables-content">
-                      @for (variable of getObjectKeys(stage.details.variables);
-                      track variable) {
-                      <div class="variable-item">
-                        <strong>{{ variable }}:</strong>
-                        {{ stage.details.variables[variable] }}
-                      </div>
-                      }
-                    </div>
-                  </details>
+            <!-- Show failed steps if stage failed -->
+            @if (stageHasFailed(stage)) { @if (getFailedSteps(stage).length > 0)
+            {
+            <div class="failed-steps">
+              <div class="failed-steps-title">❌ Failed Steps:</div>
+              @for (failedStep of getFailedSteps(stage); track
+              failedStep.jobName) {
+              <div class="failed-step-item">
+                <strong>{{ failedStep.jobName }}</strong>
+                @if (failedStep.failedTasks.length > 0) {
+                <div class="failed-tasks">
+                  @for (task of failedStep.failedTasks; track task.name) {
+                  <div class="failed-task">• {{ task.name }}</div>
+                  }
                 </div>
                 }
               </div>
               }
+            </div>
+            } }
 
-              <!-- Always show jobs if available -->
-              @if (stage.jobs && stage.jobs.length > 0) {
-              <div class="stage-jobs">
-                <div class="jobs-list">
-                  @for (job of stage.jobs; track job.name) {
-                  <div class="job-item" [class]="getJobStatusClass(job)">
-                    <div class="job-status-icon">{{ getJobIcon(job) }}</div>
-                    <div class="job-details">
-                      <div class="job-name">{{ job.name }}</div>
-                      <div class="job-status-text">
-                        {{ getJobStatusText(job) }}
-                      </div>
-
-                      <!-- Show real job timeline details -->
-                      @if (job.details) {
-                      <div class="job-timeline-info">
-                        @if (job.details.id) {
-                        <div class="job-detail">
-                          <strong>Job ID:</strong> {{ job.details.id }}
-                        </div>
-                        } @if (job.details.identifier) {
-                        <div class="job-detail">
-                          <strong>Identifier:</strong>
-                          {{ job.details.identifier }}
-                        </div>
-                        } @if (job.details.parentId) {
-                        <div class="job-detail">
-                          <strong>Parent ID:</strong> {{ job.details.parentId }}
-                        </div>
-                        } @if (job.details.workerName) {
-                        <div class="job-detail">
-                          <strong>Worker:</strong> {{ job.details.workerName }}
-                        </div>
-                        } @if (job.details.agentName) {
-                        <div class="job-detail">
-                          <strong>Agent:</strong> {{ job.details.agentName }}
-                        </div>
-                        } @if (job.details.poolName) {
-                        <div class="job-detail">
-                          <strong>Pool:</strong> {{ job.details.poolName }}
-                        </div>
-                        } @if (job.details.queueId) {
-                        <div class="job-detail">
-                          <strong>Queue ID:</strong> {{ job.details.queueId }}
-                        </div>
-                        } @if (job.details.attempt) {
-                        <div class="job-detail">
-                          <strong>Attempt:</strong> {{ job.details.attempt }}
-                        </div>
-                        } @if (job.details.percentComplete !== undefined) {
-                        <div class="job-detail">
-                          <strong>Progress:</strong>
-                          {{ job.details.percentComplete }}%
-                        </div>
-                        } @if (job.details.requestedFor) {
-                        <div class="job-detail">
-                          <strong>Requested For:</strong>
-                          {{ job.details.requestedFor.displayName }}
-                        </div>
-                        } @if (job.details.changeId) {
-                        <div class="job-detail">
-                          <strong>Change ID:</strong> {{ job.details.changeId }}
-                        </div>
-                        } @if (job.details.lastModified) {
-                        <div class="job-detail">
-                          <strong>Last Modified:</strong>
-                          {{ job.details.lastModified | date : "medium" }}
-                        </div>
-                        } @if (job.details.previousAttempts &&
-                        job.details.previousAttempts.length > 0) {
-                        <div class="job-detail">
-                          <strong>Previous Attempts:</strong>
-                          {{ job.details.previousAttempts.length }}
-                        </div>
-                        } @if (job.details.issues && job.details.issues.length >
-                        0) {
-                        <div class="job-detail issues">
-                          <strong>Issues:</strong>
-                          {{ job.details.issues.length }}
-                        </div>
-                        } @if (job.details.log && job.details.log.url) {
-                        <div class="job-detail">
-                          <strong>Log:</strong>
-                          <a [href]="job.details.log.url" target="_blank"
-                            >View Log (ID: {{ job.details.log.id }})</a
-                          >
-                        </div>
-                        } @if (job.details.variables &&
-                        getObjectKeysLength(job.details.variables) > 0) {
-                        <div class="job-detail">
-                          <strong>Variables:</strong>
-                          {{ getObjectKeysLength(job.details.variables) }}
-                          defined
-                          <details class="variables-details">
-                            <summary>Show Variables</summary>
-                            <div class="variables-content">
-                              @for (variable of
-                              getObjectKeys(job.details.variables); track
-                              variable) {
-                              <div class="variable-item">
-                                <strong>{{ variable }}:</strong>
-                                {{ job.details.variables[variable] }}
-                              </div>
-                              }
-                            </div>
-                          </details>
-                        </div>
-                        }
-
-                        <!-- Show tasks within the job -->
-                        @if (job.details.tasks && job.details.tasks.length > 0)
-                        {
-                        <div class="job-tasks">
-                          <strong
-                            >Tasks ({{ job.details.tasks.length }}):</strong
-                          >
-                          @for (task of job.details.tasks; track task.id) {
-                          <div
-                            class="task-item"
-                            [class]="getStatusClass(task.status, task.result)"
-                          >
-                            <div class="task-header">
-                              <span class="task-icon">{{
-                                getTaskIcon(task)
-                              }}</span>
-                              <span class="task-name">{{ task.name }}</span>
-                              @if (task.errorCount && task.errorCount > 0) {
-                              <span class="task-errors" title="Errors"
-                                >⚠️ {{ task.errorCount }}</span
-                              >
-                              } @if (task.warningCount && task.warningCount > 0)
-                              {
-                              <span class="task-warnings" title="Warnings"
-                                >⚠️ {{ task.warningCount }}</span
-                              >
-                              }
-                            </div>
-
-                            <!-- Task details -->
-                            <div class="task-details">
-                              @if (task.id) {
-                              <div class="task-detail">
-                                <strong>Task ID:</strong> {{ task.id }}
-                              </div>
-                              } @if (task.identifier) {
-                              <div class="task-detail">
-                                <strong>Identifier:</strong>
-                                {{ task.identifier }}
-                              </div>
-                              } @if (task.type) {
-                              <div class="task-detail">
-                                <strong>Type:</strong> {{ task.type }}
-                              </div>
-                              } @if (task.agentName) {
-                              <div class="task-detail">
-                                <strong>Agent:</strong> {{ task.agentName }}
-                              </div>
-                              } @if (task.workerName) {
-                              <div class="task-detail">
-                                <strong>Worker:</strong> {{ task.workerName }}
-                              </div>
-                              } @if (task.attempt) {
-                              <div class="task-detail">
-                                <strong>Attempt:</strong> {{ task.attempt }}
-                              </div>
-                              } @if (task.order) {
-                              <div class="task-detail">
-                                <strong>Order:</strong> {{ task.order }}
-                              </div>
-                              } @if (task.percentComplete !== undefined) {
-                              <div class="task-detail">
-                                <strong>Progress:</strong>
-                                {{ task.percentComplete }}%
-                              </div>
-                              } @if (task.task) {
-                              <div class="task-detail">
-                                <strong>Task Definition:</strong>
-                                {{ task.task.name }} v{{ task.task.version }}
-                              </div>
-                              } @if (task.requestedFor) {
-                              <div class="task-detail">
-                                <strong>Requested For:</strong>
-                                {{ task.requestedFor.displayName }}
-                              </div>
-                              } @if (task.changeId) {
-                              <div class="task-detail">
-                                <strong>Change ID:</strong> {{ task.changeId }}
-                              </div>
-                              } @if (task.lastModified) {
-                              <div class="task-detail">
-                                <strong>Last Modified:</strong>
-                                {{ task.lastModified | date : "medium" }}
-                              </div>
-                              } @if (task.logUrl) {
-                              <div class="task-detail">
-                                <strong>Log:</strong>
-                                <a [href]="task.logUrl" target="_blank"
-                                  >View Task Log</a
-                                >
-                              </div>
-                              } @if (task.issues && task.issues.length > 0) {
-                              <div class="task-detail issues">
-                                <strong>Issues:</strong>
-                                {{ task.issues.length }}
-                              </div>
-                              } @if (task.previousAttempts &&
-                              task.previousAttempts.length > 0) {
-                              <div class="task-detail">
-                                <strong>Previous Attempts:</strong>
-                                {{ task.previousAttempts.length }}
-                              </div>
-                              } @if (task.variables &&
-                              getObjectKeysLength(task.variables) > 0) {
-                              <div class="task-detail">
-                                <strong>Variables:</strong>
-                                {{ getObjectKeysLength(task.variables) }}
-                                defined
-                                <details class="variables-details">
-                                  <summary>Show Variables</summary>
-                                  <div class="variables-content">
-                                    @for (variable of
-                                    getObjectKeys(task.variables); track
-                                    variable) {
-                                    <div class="variable-item">
-                                      <strong>{{ variable }}:</strong>
-                                      {{ task.variables[variable] }}
-                                    </div>
-                                    }
-                                  </div>
-                                </details>
-                              </div>
-                              }
-                            </div>
-                          </div>
-                          }
-                        </div>
-                        }
-                      </div>
-                      }
+            <!-- Show jobs in simplified format -->
+            @if (stage.jobs && stage.jobs.length > 0) {
+            <div class="stage-jobs">
+              <div class="jobs-list">
+                @for (job of stage.jobs; track job.name) {
+                <div
+                  class="job-item clickable"
+                  [class]="getJobStatusClass(job)"
+                  (click)="onJobClick(build, stage, job)"
+                  title="Click to view job logs in Azure DevOps"
+                >
+                  <div class="job-status-icon">{{ getJobIcon(job) }}</div>
+                  <div class="job-details">
+                    <div class="job-name">
+                      {{ job.name }}
+                      <svg
+                        class="clickable-icon"
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <polyline
+                          points="15,3 21,3 21,9"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <line
+                          x1="10"
+                          y1="14"
+                          x2="21"
+                          y2="3"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div class="job-status-text">
+                      {{ getJobStatusText(job) }}
                     </div>
                   </div>
-                  }
                 </div>
+                }
               </div>
-              } @else if (stage.totalJobs && stage.totalJobs > 0) {
-              <!-- Show summary when individual jobs not available -->
-              <div class="stage-jobs">
-                <div class="jobs-summary">
-                  <span class="job-count completed" title="Completed Jobs">
-                    ✓ {{ stage.completedJobs || 0 }}
-                  </span>
-                  @if (stage.failedJobs && stage.failedJobs > 0) {
-                  <span class="job-count failed" title="Failed Jobs">
-                    ✗ {{ stage.failedJobs }}
-                  </span>
-                  } @if (stage.skippedJobs && stage.skippedJobs > 0) {
-                  <span class="job-count skipped" title="Skipped Jobs">
-                    ⏭ {{ stage.skippedJobs }}
-                  </span>
-                  }
-                  <span class="total-jobs">/ {{ stage.totalJobs }}</span>
-                </div>
-              </div>
-              }
             </div>
+            } @else if (stage.totalJobs && stage.totalJobs > 0) {
+            <!-- Show summary when individual jobs not available -->
+            <div class="stage-jobs">
+              <div class="jobs-summary">
+                <span class="job-count completed" title="Completed Jobs">
+                  ✓ {{ stage.completedJobs || 0 }}
+                </span>
+                @if (stage.failedJobs && stage.failedJobs > 0) {
+                <span class="job-count failed" title="Failed Jobs">
+                  ✗ {{ stage.failedJobs }}
+                </span>
+                } @if (stage.skippedJobs && stage.skippedJobs > 0) {
+                <span class="job-count skipped" title="Skipped Jobs">
+                  ⏭ {{ stage.skippedJobs }}
+                </span>
+                }
+                <span class="total-jobs">/ {{ stage.totalJobs }}</span>
+              </div>
+            </div>
+            }
           </div>
-          }
         </div>
+        }
       </div>
-      } @else {
-      <div class="no-timeline-data">
-        <p>
-          <em>No timeline data available from Azure DevOps for this build.</em>
-        </p>
-        <p>
-          This usually means the build is very recent or the timeline API
-          returned empty data.
-        </p>
-      </div>
-      } @if (build.url) {
-      <div class="build-actions">
-        <a [href]="build.url" target="_blank" class="view-build-link">
-          View Build Details
-        </a>
-      </div>
-      }
+    </div>
+    } @else {
+    <div class="no-timeline-data">
+      <p>
+        <em>No timeline data available from Azure DevOps for this build.</em>
+      </p>
+      <p>
+        This usually means the build is very recent or the timeline API returned
+        empty data.
+      </p>
+    </div>
+    } @if (build.url) {
+    <div class="build-actions">
+      <a [href]="build.url" target="_blank" class="view-build-link">
+        View Build Details
+      </a>
     </div>
     }
   </div>
   }
 </div>
+}

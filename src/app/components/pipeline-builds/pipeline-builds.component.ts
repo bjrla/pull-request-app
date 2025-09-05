@@ -8,141 +8,8 @@ import {
 import { LoadingComponent } from "../loading/loading.component";
 import { ErrorMessageComponent } from "../error-message/error-message.component";
 import { NoDataComponent } from "../no-data/no-data.component";
+import { ConfigStorageService } from "../../services/config-storage.service";
 import { forkJoin, map, catchError, of } from "rxjs";
-
-export interface PipelineBuild {
-  id: number;
-  buildNumber: string;
-  status: string;
-  result?: string;
-  definition: {
-    name: string;
-    id: number;
-  };
-  startTime?: string;
-  finishTime?: string;
-  sourceBranch: string;
-  stages?: PipelineStage[];
-  queueTime?: string;
-  url?: string;
-}
-
-export interface PipelineStage {
-  name: string;
-  status: string;
-  result?: string;
-  startTime?: string;
-  finishTime?: string;
-  order: number;
-  jobs?: StageJob[];
-  totalJobs?: number;
-  completedJobs?: number;
-  failedJobs?: number;
-  skippedJobs?: number;
-  details?: {
-    id?: string;
-    type?: string;
-    state?: string;
-    result?: string;
-    percentComplete?: number;
-    attempt?: number;
-    queueId?: number;
-    workerName?: string;
-    previousAttempts?: any[];
-    issues?: any[];
-    errorCount?: number;
-    warningCount?: number;
-    changeId?: string;
-    lastModified?: string;
-    identifier?: string;
-    parentId?: string;
-    agentName?: string;
-    log?: {
-      id?: number;
-      url?: string;
-    };
-    variables?: { [key: string]: any };
-    environment?: {
-      name?: string;
-      id?: number;
-    };
-    refName?: string;
-    requestedFor?: {
-      displayName?: string;
-      uniqueName?: string;
-    };
-  };
-}
-
-export interface StageJob {
-  name: string;
-  status: string; // 'completed', 'failed', 'skipped', 'inProgress'
-  result?: string;
-  startTime?: string;
-  finishTime?: string;
-  details?: {
-    id?: string;
-    type?: string;
-    workerName?: string;
-    queueId?: number;
-    attempt?: number;
-    order?: number;
-    percentComplete?: number;
-    tasks?: TaskInfo[];
-    agentName?: string;
-    poolName?: string;
-    identifier?: string;
-    parentId?: string;
-    log?: {
-      id?: number;
-      url?: string;
-    };
-    variables?: { [key: string]: any };
-    requestedFor?: {
-      displayName?: string;
-      uniqueName?: string;
-    };
-    previousAttempts?: any[];
-    issues?: any[];
-    changeId?: string;
-    lastModified?: string;
-  };
-}
-
-export interface TaskInfo {
-  name: string;
-  status: string;
-  result?: string;
-  startTime?: string;
-  finishTime?: string;
-  id?: string;
-  order?: number;
-  percentComplete?: number;
-  logId?: string;
-  logUrl?: string;
-  issues?: any[];
-  errorCount?: number;
-  warningCount?: number;
-  type?: string;
-  identifier?: string;
-  parentId?: string;
-  agentName?: string;
-  workerName?: string;
-  attempt?: number;
-  changeId?: string;
-  lastModified?: string;
-  task?: {
-    id?: string;
-    name?: string;
-    version?: string;
-  };
-  variables?: { [key: string]: any };
-  requestedFor?: {
-    displayName?: string;
-    uniqueName?: string;
-  };
-  previousAttempts?: any[];
-}
 
 @Component({
   selector: "app-pipeline-builds",
@@ -161,23 +28,23 @@ export class PipelineBuildsComponent implements OnInit {
   isLoading = false;
   error: string | null = null;
   currentProjects: ProjectConfig[] = [];
-  currentPAT: string = "";
 
-  private readonly PROJECTS_STORAGE_KEY = "azure-devops-projects";
-  private readonly PAT_STORAGE_KEY = "azure-devops-pat";
-
-  constructor(private azureDevOpsService: AzureDevOpsService) {}
+  constructor(
+    private azureDevOpsService: AzureDevOpsService,
+    private configService: ConfigStorageService
+  ) {}
 
   ngOnInit() {
-    this.loadProjectsFromStorage();
-    this.loadPATFromStorage();
+    // Get current projects and load pipeline builds if available
+    this.currentProjects = this.configService.currentProjects;
 
-    // Only load pipeline builds if we have projects configured
-    if (this.currentProjects.length > 0) {
-      this.loadPipelineBuilds();
-    } else {
+    if (this.currentProjects.length === 0) {
       this.error =
         "No projects configured. Please configure projects in the main application.";
+      this.isLoading = false;
+    } else {
+      // Load pipeline builds - PAT is handled automatically by ConfigStorageService
+      this.loadPipelineBuilds();
     }
 
     // Subscribe to authentication errors
@@ -187,43 +54,19 @@ export class PipelineBuildsComponent implements OnInit {
     });
   }
 
-  private loadProjectsFromStorage() {
-    try {
-      const stored = localStorage.getItem(this.PROJECTS_STORAGE_KEY);
-      if (stored) {
-        this.currentProjects = JSON.parse(stored);
-        console.log("Loaded projects from storage:", this.currentProjects);
-      } else {
-        console.log("No projects found in storage, using default config");
-        this.currentProjects = AZURE_DEVOPS_CONFIG.projects;
-      }
-    } catch (error) {
-      console.error("Error loading projects from storage:", error);
-      this.currentProjects = AZURE_DEVOPS_CONFIG.projects;
-    }
-  }
-
-  private loadPATFromStorage() {
-    try {
-      const stored = localStorage.getItem(this.PAT_STORAGE_KEY);
-      if (stored) {
-        this.currentPAT = stored;
-        console.log("Loaded PAT from storage");
-      } else {
-        console.log("No PAT found in storage, using default config");
-        this.currentPAT = AZURE_DEVOPS_CONFIG.pat;
-      }
-    } catch (error) {
-      console.error("Error loading PAT from storage:", error);
-      this.currentPAT = AZURE_DEVOPS_CONFIG.pat;
-    }
-  }
-
   private get projectName(): string {
     return "IB-SS - List of outgoing payments";
   }
 
   loadPipelineBuilds() {
+    // Check if we have the required configuration before starting
+    if (this.currentProjects.length === 0) {
+      this.error =
+        "No projects configured. Please configure projects in the main application.";
+      this.isLoading = false;
+      return;
+    }
+
     this.isLoading = true;
     this.error = null;
 
@@ -242,6 +85,13 @@ export class PipelineBuildsComponent implements OnInit {
       )
       .subscribe({
         next: (response) => {
+          // Check if response and response.value exist
+          if (!response || !response.value || !Array.isArray(response.value)) {
+            this.error = "Invalid response format from Azure DevOps API";
+            this.isLoading = false;
+            return;
+          }
+
           // For each build, fetch the timeline to get real stage and job information
           const buildTimelines$ = response.value.map((build) =>
             this.azureDevOpsService
@@ -267,10 +117,6 @@ export class PipelineBuildsComponent implements OnInit {
                   };
                 }),
                 catchError((error) => {
-                  console.warn(
-                    `Failed to get timeline for build ${build.id}:`,
-                    error
-                  );
                   // Fallback to estimated stages if timeline fails
                   return of({
                     id: build.id,
@@ -363,20 +209,13 @@ export class PipelineBuildsComponent implements OnInit {
   ): PipelineStage[] {
     // If timeline is not available or empty, fall back to estimated stages
     if (!timeline || !timeline.records || timeline.records.length === 0) {
-      console.log(
-        "Timeline data not available, falling back to estimated stages"
-      );
       return this.generateStagesFromBuild(build);
     }
-
-    console.log("Timeline data received:", JSON.stringify(timeline, null, 2));
 
     const stages: PipelineStage[] = [];
     const stageRecords = timeline.records.filter(
       (record: any) => record.type === "Stage"
     );
-
-    console.log("Stage records found:", stageRecords.length, stageRecords);
 
     // Group jobs and tasks by their parent stage
     const jobsByStage: { [stageId: string]: any[] } = {};
@@ -396,15 +235,11 @@ export class PipelineBuildsComponent implements OnInit {
       }
     });
 
-    console.log("Jobs by stage:", jobsByStage);
-    console.log("Tasks by job:", tasksByJob);
-
     stageRecords.forEach((stageRecord: any, index: number) => {
       const jobs = jobsByStage[stageRecord.id] || [];
 
       const stageJobs: StageJob[] = jobs.map((job: any) => {
         const tasks = tasksByJob[job.id] || [];
-        console.log(`Job ${job.name} has ${tasks.length} tasks:`, tasks);
 
         return {
           name: job.name || `Job ${job.order || jobs.indexOf(job) + 1}`,
@@ -523,13 +358,9 @@ export class PipelineBuildsComponent implements OnInit {
 
     // If no stages found in timeline, fall back to estimated stages
     if (stages.length === 0) {
-      console.log(
-        "No stages found in timeline, falling back to estimated stages"
-      );
       return this.generateStagesFromBuild(build);
     }
 
-    console.log("Generated stages from timeline:", stages);
     return stages;
   }
 
@@ -744,6 +575,43 @@ export class PipelineBuildsComponent implements OnInit {
     }
   }
 
+  // Navigation methods
+  onStageClick(build: PipelineBuild, stage: PipelineStage) {
+    const stageUrl = this.getStageUrl(build, stage);
+    if (stageUrl) {
+      window.open(stageUrl, "_blank");
+    }
+  }
+
+  onJobClick(build: PipelineBuild, stage: PipelineStage, job: StageJob) {
+    const jobUrl = this.getJobUrl(build, stage, job);
+    if (jobUrl) {
+      window.open(jobUrl, "_blank");
+    }
+  }
+
+  private getStageUrl(build: PipelineBuild, stage: PipelineStage): string {
+    const projectName = encodeURIComponent(this.projectName);
+    const buildId = build.id;
+    const stageId = stage.details?.id || stage.name;
+
+    // Azure DevOps URL format for build stages
+    return `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${projectName}/_build/results?buildId=${buildId}&view=logs&j=${stageId}`;
+  }
+
+  private getJobUrl(
+    build: PipelineBuild,
+    stage: PipelineStage,
+    job: StageJob
+  ): string {
+    const projectName = encodeURIComponent(this.projectName);
+    const buildId = build.id;
+    const jobId = job.details?.id || job.name;
+
+    // Azure DevOps URL format for build jobs
+    return `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${projectName}/_build/results?buildId=${buildId}&view=logs&j=${jobId}`;
+  }
+
   // Helper methods for template
   getObjectKeys(obj: any): string[] {
     return obj ? Object.keys(obj) : [];
@@ -752,4 +620,187 @@ export class PipelineBuildsComponent implements OnInit {
   getObjectKeysLength(obj: any): number {
     return obj ? Object.keys(obj).length : 0;
   }
+
+  // Get failed steps/tasks from a stage
+  getFailedSteps(
+    stage: PipelineStage
+  ): { jobName: string; failedTasks: TaskInfo[] }[] {
+    if (!stage.jobs || stage.jobs.length === 0) {
+      return [];
+    }
+
+    const failedSteps: { jobName: string; failedTasks: TaskInfo[] }[] = [];
+
+    stage.jobs.forEach((job) => {
+      if (job.details?.tasks && job.details.tasks.length > 0) {
+        const failedTasks = job.details.tasks.filter(
+          (task) =>
+            task.status === "failed" ||
+            (task.status === "completed" && task.result === "failed")
+        );
+
+        if (failedTasks.length > 0) {
+          failedSteps.push({
+            jobName: job.name,
+            failedTasks: failedTasks,
+          });
+        }
+      }
+      // If no tasks but job itself failed, consider the job as a failed step
+      else if (
+        job.status === "failed" ||
+        (job.status === "completed" && job.result === "failed")
+      ) {
+        failedSteps.push({
+          jobName: job.name,
+          failedTasks: [],
+        });
+      }
+    });
+
+    return failedSteps;
+  }
+
+  // Check if stage has failed
+  stageHasFailed(stage: PipelineStage): boolean {
+    return (
+      stage.status === "failed" ||
+      (stage.status === "completed" && stage.result === "failed") ||
+      stage.result === "failed"
+    );
+  }
+}
+
+export interface PipelineBuild {
+  id: number;
+  buildNumber: string;
+  status: string;
+  result?: string;
+  definition: {
+    name: string;
+    id: number;
+  };
+  startTime?: string;
+  finishTime?: string;
+  sourceBranch: string;
+  stages?: PipelineStage[];
+  queueTime?: string;
+  url?: string;
+}
+
+export interface PipelineStage {
+  name: string;
+  status: string;
+  result?: string;
+  startTime?: string;
+  finishTime?: string;
+  order: number;
+  jobs?: StageJob[];
+  totalJobs?: number;
+  completedJobs?: number;
+  failedJobs?: number;
+  skippedJobs?: number;
+  details?: {
+    id?: string;
+    type?: string;
+    state?: string;
+    result?: string;
+    percentComplete?: number;
+    attempt?: number;
+    queueId?: number;
+    workerName?: string;
+    previousAttempts?: any[];
+    issues?: any[];
+    errorCount?: number;
+    warningCount?: number;
+    changeId?: string;
+    lastModified?: string;
+    identifier?: string;
+    parentId?: string;
+    agentName?: string;
+    log?: {
+      id?: number;
+      url?: string;
+    };
+    variables?: { [key: string]: any };
+    environment?: {
+      name?: string;
+      id?: number;
+    };
+    refName?: string;
+    requestedFor?: {
+      displayName?: string;
+      uniqueName?: string;
+    };
+  };
+}
+
+export interface StageJob {
+  name: string;
+  status: string; // 'completed', 'failed', 'skipped', 'inProgress'
+  result?: string;
+  startTime?: string;
+  finishTime?: string;
+  details?: {
+    id?: string;
+    type?: string;
+    workerName?: string;
+    queueId?: number;
+    attempt?: number;
+    order?: number;
+    percentComplete?: number;
+    tasks?: TaskInfo[];
+    agentName?: string;
+    poolName?: string;
+    identifier?: string;
+    parentId?: string;
+    log?: {
+      id?: number;
+      url?: string;
+    };
+    variables?: { [key: string]: any };
+    requestedFor?: {
+      displayName?: string;
+      uniqueName?: string;
+    };
+    previousAttempts?: any[];
+    issues?: any[];
+    changeId?: string;
+    lastModified?: string;
+  };
+}
+
+export interface TaskInfo {
+  name: string;
+  status: string;
+  result?: string;
+  startTime?: string;
+  finishTime?: string;
+  id?: string;
+  order?: number;
+  percentComplete?: number;
+  logId?: string;
+  logUrl?: string;
+  issues?: any[];
+  errorCount?: number;
+  warningCount?: number;
+  type?: string;
+  identifier?: string;
+  parentId?: string;
+  agentName?: string;
+  workerName?: string;
+  attempt?: number;
+  changeId?: string;
+  lastModified?: string;
+  task?: {
+    id?: string;
+    name?: string;
+    version?: string;
+  };
+  variables?: { [key: string]: any };
+  requestedFor?: {
+    displayName?: string;
+    uniqueName?: string;
+  };
+  previousAttempts?: any[];
 }

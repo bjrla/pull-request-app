@@ -1,10 +1,14 @@
 import { Component, Input, Output, EventEmitter } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { PullRequest } from "../../azure-devops/azure-devops.service";
+import {
+  PullRequest,
+  PullRequestSuggestion,
+} from "../../azure-devops/azure-devops.service";
 
 export interface ProjectSummary {
   project: string;
   count: number;
+  suggestions?: PullRequestSuggestion[];
 }
 
 @Component({
@@ -20,11 +24,13 @@ export class PullRequestSummaryComponent {
   @Input() selectedRepositories: Set<string> = new Set();
   @Input() isLoading = false;
   @Input() projectSummary: ProjectSummary[] = [];
+  @Input() suggestions: PullRequestSuggestion[] = [];
 
   @Output() refreshRequested = new EventEmitter<void>();
   @Output() repositoryFilterChanged = new EventEmitter<string>();
   @Output() filterCleared = new EventEmitter<void>();
   @Output() myPullRequestsRequested = new EventEmitter<string>();
+  @Output() createPRRequested = new EventEmitter<string>();
 
   // Repository color mapping
   private repositoryColors = new Map<string, string>();
@@ -92,5 +98,45 @@ export class PullRequestSummaryComponent {
 
   getSelectedRepositoriesText(): string {
     return Array.from(this.selectedRepositories).join(", ");
+  }
+
+  // Get PR suggestions for a specific project/repository
+  getSuggestionsForProject(repositoryName: string): PullRequestSuggestion[] {
+    return this.suggestions.filter(
+      (suggestion) =>
+        suggestion.properties.sourceRepository.name === repositoryName
+    );
+  }
+
+  // Check if a project has PR suggestions
+  hasCreatePRSuggestions(repositoryName: string): boolean {
+    return this.getSuggestionsForProject(repositoryName).length > 0;
+  }
+
+  // Generate create PR URL for a suggestion
+  generateCreatePRUrl(suggestion: PullRequestSuggestion): string {
+    const baseUrl = suggestion.properties.sourceRepository.webUrl;
+    const sourceBranch = suggestion.properties.sourceBranch.replace(
+      "refs/heads/",
+      ""
+    );
+    const targetBranch = suggestion.properties.targetBranch.replace(
+      "refs/heads/",
+      ""
+    );
+    const repositoryId = suggestion.properties.sourceRepository.id;
+
+    return `${baseUrl}/pullrequestcreate?sourceRef=${encodeURIComponent(
+      sourceBranch
+    )}&targetRef=${encodeURIComponent(
+      targetBranch
+    )}&sourceRepositoryId=${repositoryId}&targetRepositoryId=${repositoryId}`;
+  }
+
+  // Handle create PR button click
+  onCreatePR(suggestion: PullRequestSuggestion, event: Event) {
+    event.stopPropagation();
+    const createPRUrl = this.generateCreatePRUrl(suggestion);
+    window.open(createPRUrl, "_blank");
   }
 }

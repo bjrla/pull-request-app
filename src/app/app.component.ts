@@ -1,11 +1,10 @@
-import { Component } from "@angular/core";
+import { Component, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Router, RouterOutlet } from "@angular/router";
 import { ManageProjectsModalComponent } from "./components/add-project-modal/add-project-modal.component";
-import {
-  AZURE_DEVOPS_CONFIG,
-  ProjectConfig,
-} from "./azure-devops/azure-devops.config";
+import { ProjectConfig } from "./azure-devops/azure-devops.config";
+import { ConfigStorageService } from "./services/config-storage.service";
+import { Subscription } from "rxjs";
 
 @Component({
   selector: "app-root",
@@ -14,7 +13,7 @@ import {
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"],
 })
-export class AppComponent {
+export class AppComponent implements OnDestroy {
   title = "pull-request-overview";
 
   // Project and PAT management
@@ -22,12 +21,28 @@ export class AppComponent {
   currentProjects: ProjectConfig[] = [];
   currentPAT: string = "";
 
-  private readonly PROJECTS_STORAGE_KEY = "azure-devops-projects";
-  private readonly PAT_STORAGE_KEY = "azure-devops-pat";
+  private subscriptions = new Subscription();
 
-  constructor(private router: Router) {
-    this.loadProjectsFromStorage();
-    this.loadPATFromStorage();
+  constructor(
+    private router: Router,
+    private configStorageService: ConfigStorageService
+  ) {
+    // Subscribe to configuration changes
+    this.subscriptions.add(
+      this.configStorageService.projects$.subscribe((projects) => {
+        this.currentProjects = projects;
+      })
+    );
+
+    this.subscriptions.add(
+      this.configStorageService.pat$.subscribe((pat) => {
+        this.currentPAT = pat;
+      })
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
   }
 
   // Navigation methods
@@ -48,74 +63,20 @@ export class AppComponent {
     this.isManageProjectsModalOpen = false;
   }
 
-  // Project management methods
+  // Project management methods - now using ConfigStorageService
   onProjectsUpdated(projects: ProjectConfig[]): void {
-    this.currentProjects = projects;
-    this.saveProjectsToStorage();
+    this.configStorageService.updateProjects(projects);
   }
 
   onProjectAdded(project: ProjectConfig): void {
-    this.currentProjects.push(project);
-    this.saveProjectsToStorage();
+    this.configStorageService.addProject(project);
   }
 
   onProjectRemoved(projectName: string): void {
-    const index = this.currentProjects.findIndex((p) => p.name === projectName);
-    if (index > -1) {
-      this.currentProjects.splice(index, 1);
-      this.saveProjectsToStorage();
-    }
+    this.configStorageService.removeProject(projectName);
   }
 
   onPATUpdated(pat: string): void {
-    this.currentPAT = pat;
-    this.savePATToStorage();
-  }
-
-  private loadProjectsFromStorage() {
-    try {
-      const stored = localStorage.getItem(this.PROJECTS_STORAGE_KEY);
-      if (stored) {
-        this.currentProjects = JSON.parse(stored);
-      } else {
-        this.currentProjects = AZURE_DEVOPS_CONFIG.projects;
-      }
-    } catch (error) {
-      console.error("Error loading projects from storage:", error);
-      this.currentProjects = AZURE_DEVOPS_CONFIG.projects;
-    }
-  }
-
-  private loadPATFromStorage() {
-    try {
-      const stored = localStorage.getItem(this.PAT_STORAGE_KEY);
-      if (stored) {
-        this.currentPAT = stored;
-      } else {
-        this.currentPAT = AZURE_DEVOPS_CONFIG.pat;
-      }
-    } catch (error) {
-      console.error("Error loading PAT from storage:", error);
-      this.currentPAT = AZURE_DEVOPS_CONFIG.pat;
-    }
-  }
-
-  private saveProjectsToStorage() {
-    try {
-      localStorage.setItem(
-        this.PROJECTS_STORAGE_KEY,
-        JSON.stringify(this.currentProjects)
-      );
-    } catch (error) {
-      console.error("Error saving projects to storage:", error);
-    }
-  }
-
-  private savePATToStorage() {
-    try {
-      localStorage.setItem(this.PAT_STORAGE_KEY, this.currentPAT);
-    } catch (error) {
-      console.error("Error saving PAT to storage:", error);
-    }
+    this.configStorageService.updatePAT(pat);
   }
 }

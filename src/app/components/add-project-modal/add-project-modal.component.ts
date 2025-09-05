@@ -9,6 +9,7 @@ import {
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ProjectConfig } from "../../azure-devops/azure-devops.config";
+import { ConfigStorageService } from "../../services/config-storage.service";
 
 @Component({
   selector: "app-manage-projects-modal",
@@ -20,7 +21,6 @@ import { ProjectConfig } from "../../azure-devops/azure-devops.config";
 export class ManageProjectsModalComponent implements OnInit, OnChanges {
   @Input() isOpen = false;
   @Input() currentProjects: ProjectConfig[] = [];
-  @Input() currentPAT = "";
   @Output() closeModal = new EventEmitter<void>();
   @Output() projectAdded = new EventEmitter<ProjectConfig>();
   @Output() projectRemoved = new EventEmitter<string>();
@@ -28,6 +28,10 @@ export class ManageProjectsModalComponent implements OnInit, OnChanges {
   @Output() projectsReordered = new EventEmitter<ProjectConfig[]>();
 
   projectName = "";
+  currentPAT = "";
+
+  constructor(private configService: ConfigStorageService) {}
+
   repositoryName = "";
   repositoryUrl = "";
   personalAccessToken = "";
@@ -86,17 +90,23 @@ export class ManageProjectsModalComponent implements OnInit, OnChanges {
 
   onUpdatePAT() {
     if (this.personalAccessToken.trim()) {
-      this.patUpdated.emit(this.personalAccessToken.trim());
+      // Update via ConfigStorageService instead of emitting event
+      this.configService.updatePAT(this.personalAccessToken.trim());
     }
   }
 
   ngOnInit() {
+    // Get current PAT value from service when component initializes
+    this.currentPAT = this.configService.currentPAT;
     this.personalAccessToken = this.currentPAT;
   }
 
   ngOnChanges() {
-    // Update the local PAT when the input changes
-    this.personalAccessToken = this.currentPAT;
+    // Update PAT when modal opens
+    if (this.isOpen) {
+      this.currentPAT = this.configService.currentPAT;
+      this.personalAccessToken = this.currentPAT;
+    }
   }
 
   onCancel() {

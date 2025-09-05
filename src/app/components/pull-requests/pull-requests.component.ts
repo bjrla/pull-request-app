@@ -1,8 +1,10 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { Subscription } from "rxjs";
 import {
   AzureDevOpsService,
   PullRequest,
+  PullRequestSuggestion,
 } from "../../azure-devops/azure-devops.service";
 import {
   AZURE_DEVOPS_CONFIG,
@@ -18,6 +20,7 @@ import { ErrorMessageComponent } from "../error-message/error-message.component"
 import { NoDataComponent } from "../no-data/no-data.component";
 import { ManageProjectsModalComponent } from "../add-project-modal/add-project-modal.component";
 import { PATPromptModalComponent } from "../pat-prompt-modal/pat-prompt-modal.component";
+import { ConfigStorageService } from "../../services/config-storage.service";
 
 @Component({
   selector: "app-pull-requests",
@@ -35,12 +38,15 @@ import { PATPromptModalComponent } from "../pat-prompt-modal/pat-prompt-modal.co
   templateUrl: "./pull-requests.component.html",
   styleUrl: "./pull-requests.component.scss",
 })
-export class PullRequestsComponent implements OnInit {
+export class PullRequestsComponent implements OnInit, OnDestroy {
   pullRequests: PullRequest[] = [];
   filteredPullRequests: PullRequest[] = [];
   selectedRepositories: Set<string> = new Set();
   isLoading = false;
   error: string | null = null;
+
+  // PR Suggestions
+  prSuggestions: PullRequestSuggestion[] = [];
 
   // Modal state
   isAddProjectModalOpen = false;
@@ -48,12 +54,9 @@ export class PullRequestsComponent implements OnInit {
 
   // Project management
   currentProjects: ProjectConfig[] = [];
-  private readonly PROJECTS_STORAGE_KEY = "azure-devops-projects";
-  private readonly PAT_STORAGE_KEY = "azure-devops-pat";
-
-  // PAT management
-  currentPAT: string = "";
   patPromptMessage: string = "";
+
+  private subscriptions = new Subscription();
 
   // Repository color mapping
   private repositoryColors = new Map<string, string>();
@@ -76,25 +79,38 @@ export class PullRequestsComponent implements OnInit {
     "#567c73", // Dark Teal
   ];
 
-  constructor(private azureDevOpsService: AzureDevOpsService) {}
+  constructor(
+    private azureDevOpsService: AzureDevOpsService,
+    private configService: ConfigStorageService
+  ) {}
 
   ngOnInit() {
     console.log("PullRequestsComponent initialized");
-    this.loadProjectsFromStorage();
-    this.loadPATFromStorage();
+
+    // Subscribe to projects changes only - PAT is handled automatically by ConfigStorageService
+    this.subscriptions.add(
+      this.configService.projects$.subscribe((projects) => {
+        this.currentProjects = projects;
+        console.log("Projects updated:", this.currentProjects);
+
+        if (this.currentProjects.length > 0) {
+          this.loadPullRequests();
+        }
+      })
+    );
 
     // Handle authentication errors
     this.azureDevOpsService.authError$.subscribe((message) => {
       this.promptForPAT(message);
     });
 
-    // Only load pull requests if we have projects and PAT configured
-    if (this.currentProjects.length > 0 && this.currentPAT) {
-      this.loadPullRequests();
-    } else if (this.currentProjects.length === 0) {
+    // Add visibility change listener to refresh PRs when page becomes active
+    this.setupVisibilityChangeListener();
+
+    // Check if we need to show modals
+    if (this.currentProjects.length === 0) {
       console.log("No projects configured, opening add project modal");
       this.openAddProjectModal();
-    } else {
       console.log("No PAT configured, prompting for PAT");
       this.promptForPAT(
         "No Personal Access Token configured. Please provide a valid PAT to access Azure DevOps."
@@ -102,51 +118,46 @@ export class PullRequestsComponent implements OnInit {
     }
   }
 
-  private loadProjectsFromStorage() {
-    try {
-      const stored = localStorage.getItem(this.PROJECTS_STORAGE_KEY);
-      if (stored) {
-        this.currentProjects = JSON.parse(stored);
-        console.log("Loaded projects from storage:", this.currentProjects);
-      } else {
-        console.log("No projects found in storage, using default config");
-        this.currentProjects = AZURE_DEVOPS_CONFIG.projects;
-      }
-    } catch (error) {
-      console.error("Error loading projects from storage:", error);
-      this.currentProjects = AZURE_DEVOPS_CONFIG.projects;
+  ngOnDestroy() {
+    // Clean up subscriptions
+    this.subscriptions.unsubscribe();
+
+    // Clean up the visibility change listener
+    if (typeof document !== "undefined") {
+      document.removeEventListener(
+        "visibilitychange",
+        this.handleVisibilityChange
+      );
     }
   }
 
-  private loadPATFromStorage() {
-    try {
-      const stored = localStorage.getItem(this.PAT_STORAGE_KEY);
-      if (stored) {
-        this.currentPAT = stored;
-        console.log("Loaded PAT from storage");
-      } else {
-        console.log("No PAT found in storage, using default config");
-        this.currentPAT = AZURE_DEVOPS_CONFIG.pat;
-      }
-    } catch (error) {
-      console.error("Error loading PAT from storage:", error);
-      this.currentPAT = AZURE_DEVOPS_CONFIG.pat;
+  private setupVisibilityChangeListener() {
+    // Check if we're in a browser environment
+    if (typeof document !== "undefined") {
+      document.addEventListener(
+        "visibilitychange",
+        this.handleVisibilityChange
+      );
     }
   }
+
+  private handleVisibilityChange = () => {
+    // When the page becomes visible again, refresh the PRs
+    if (
+      !document.hidden &&
+      this.currentProjects.length > 0 &&
+      !this.isLoading
+    ) {
+      this.loadPullRequests();
+    }
+  };
 
   loadPullRequests() {
     this.isLoading = true;
     this.error = null;
 
-    if (!this.currentPAT) {
-      this.promptForPAT(
-        "No Personal Access Token configured. Please provide a valid PAT to access Azure DevOps."
-      );
-      return;
-    }
-
     this.azureDevOpsService
-      .getActivePullRequests(this.currentProjects, this.currentPAT)
+      .getActivePullRequests(this.currentProjects)
       .subscribe({
         next: (response) => {
           console.log("Pull requests loaded:", response);
@@ -154,12 +165,50 @@ export class PullRequestsComponent implements OnInit {
           this.assignRepositoryColors();
           this.filteredPullRequests = [...this.pullRequests];
           this.isLoading = false;
+
+          // Also check for PR suggestions
+          this.checkForPullRequestSuggestions();
         },
         error: (error) => {
           console.error("Error loading pull requests:", error);
           this.error =
             "Failed to load pull requests. Please check your configuration and try again.";
           this.isLoading = false;
+        },
+      });
+  }
+
+  private checkForPullRequestSuggestions() {
+    this.azureDevOpsService
+      .getPullRequestSuggestions(this.currentProjects)
+      .subscribe({
+        next: (suggestions) => {
+          this.prSuggestions = suggestions;
+          if (suggestions.length > 0) {
+            console.log("Found PR suggestions:", suggestions);
+            // For each suggestion, log the branch that can create a PR
+            suggestions.forEach((suggestion) => {
+              const sourceBranch = suggestion.properties.sourceBranch.replace(
+                "refs/heads/",
+                ""
+              );
+              const targetBranch = suggestion.properties.targetBranch.replace(
+                "refs/heads/",
+                ""
+              );
+              const projectName =
+                suggestion.properties.sourceRepository.project.name;
+              const repoName = suggestion.properties.sourceRepository.name;
+              console.log(
+                `You can create a PR from branch "${sourceBranch}" to "${targetBranch}" in "${repoName}" (${projectName})`
+              );
+            });
+          } else {
+            console.log("No PR suggestions found");
+          }
+        },
+        error: (error) => {
+          console.error("Error fetching PR suggestions:", error);
         },
       });
   }
@@ -236,17 +285,11 @@ export class PullRequestsComponent implements OnInit {
 
   onProjectsUpdated(projects: ProjectConfig[]) {
     console.log("Projects updated:", projects);
-    this.currentProjects = projects;
-    localStorage.setItem(this.PROJECTS_STORAGE_KEY, JSON.stringify(projects));
+    this.configService.updateProjects(projects);
     this.closeAddProjectModal();
 
-    if (this.currentPAT) {
-      this.loadPullRequests();
-    } else {
-      this.promptForPAT(
-        "Please provide a Personal Access Token to access the new projects."
-      );
-    }
+    // Load pull requests for the new projects
+    this.loadPullRequests();
   }
 
   promptForPAT(message: string) {
@@ -261,8 +304,7 @@ export class PullRequestsComponent implements OnInit {
 
   onPATUpdated(pat: string) {
     console.log("PAT updated");
-    this.currentPAT = pat;
-    localStorage.setItem(this.PAT_STORAGE_KEY, pat);
+    this.configService.updatePAT(pat);
     this.closePATPromptModal();
     this.loadPullRequests();
   }
