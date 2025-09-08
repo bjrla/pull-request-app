@@ -355,7 +355,13 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
 
   openTeamsForPR(pr: PullRequest): void {
     // Create the PR URL using Azure DevOps config
-    const prUrl = `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${pr.projectName}/_git/${pr.repository.name}/pullrequest/${pr.pullRequestId}`;
+    const prUrl = `${AZURE_DEVOPS_CONFIG.baseUrl}/${
+      AZURE_DEVOPS_CONFIG.organization
+    }/${encodeURIComponent(
+      pr.projectName || "{{PROJECT}}"
+    )}/_git/${encodeURIComponent(pr.repository.name)}/pullrequest/${
+      pr.pullRequestId
+    }`;
 
     // Create the PR message content
     const message = `🆕 ${pr.title}
