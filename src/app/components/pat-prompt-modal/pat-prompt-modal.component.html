@@ -1,0 +1,58 @@
+<div class="modal-backdrop" *ngIf="isOpen" (click)="onBackdropClick($event)">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Personal Access Token Required</h2>
+    </div>
+
+    <div class="modal-body">
+      <div class="pat-prompt-section">
+        <p class="message">{{ message }}</p>
+
+        <form (ngSubmit)="onSubmit()" #patForm="ngForm">
+          <div class="form-group">
+            <label for="personalAccessToken"
+              >Azure DevOps Personal Access Token *</label
+            >
+            <input
+              type="password"
+              id="personalAccessToken"
+              name="personalAccessToken"
+              [(ngModel)]="personalAccessToken"
+              required
+              placeholder="Enter your Azure DevOps Personal Access Token"
+              class="form-control"
+              autofocus
+            />
+          </div>
+
+          <div class="form-actions">
+            <button
+              type="submit"
+              class="btn btn-primary"
+              [disabled]="!personalAccessToken.trim()"
+            >
+              Configure PAT
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="onCancel()"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+
+        <div class="help-text">
+          <p><strong>How to get a Personal Access Token:</strong></p>
+          <ol>
+            <li>Go to Azure DevOps → User Settings → Personal Access Tokens</li>
+            <li>Click "New Token"</li>
+            <li>Give it a name and select the required scopes (Code: Read)</li>
+            <li>Copy the generated token and paste it above</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

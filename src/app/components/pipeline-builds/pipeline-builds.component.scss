@@ -1,0 +1,747 @@
+.pipeline-builds-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+
+  h2 {
+    color: #333;
+    margin: 0;
+    font-size: 1.5rem;
+  }
+}
+
+.pipeline-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: center;
+}
+
+.pipeline-name {
+  font-weight: 600;
+  color: #0066cc;
+}
+
+.pipeline-link {
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 0.9rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #0052a3;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.builds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.build-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  &.succeeded {
+    border-left: 4px solid #28a745;
+  }
+
+  &.failed {
+    border-left: 4px solid #dc3545;
+  }
+
+  &.in-progress {
+    border-left: 4px solid #ffc107;
+  }
+}
+
+.build-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.build-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.build-number {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.build-branch {
+  color: #666;
+  background: #f5f5f5;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+.build-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: uppercase;
+
+  &.succeeded {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  &.failed {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  &.in-progress {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  &.not-started {
+    background: #e2e3e5;
+    color: #6c757d;
+  }
+}
+
+.build-time {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.stages-container {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #eee;
+
+  h4 {
+    margin: 0 0 12px 0;
+    color: #333;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+}
+
+.stages-list,
+.stages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.stage {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s;
+
+  &.succeeded {
+    background: #d4edda;
+    border-color: #c3e6cb;
+  }
+
+  &.failed {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+  }
+
+  &.in-progress {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+    animation: pulse 2s infinite;
+  }
+
+  &.not-started {
+    background: #e9ecef;
+    border-color: #ced4da;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.stage-name {
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.stage-status {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.stage-duration {
+  font-size: 0.75rem;
+  color: #888;
+  font-style: italic;
+}
+
+.stage-jobs {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.jobs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.job-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+
+  &.job-succeeded {
+    background: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+  }
+
+  &.job-failed {
+    background: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+  }
+
+  &.job-skipped {
+    background: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+  }
+
+  &.job-in-progress {
+    background: #cce5ff;
+    border-color: #99ccff;
+    color: #004085;
+    animation: pulse 2s infinite;
+  }
+
+  &.job-pending {
+    background: #e9ecef;
+    border-color: #ced4da;
+    color: #6c757d;
+  }
+}
+
+.job-status-icon {
+  font-size: 1rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.job-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.job-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+// Clickable styles for stages and jobs
+.clickable {
+  cursor: pointer;
+  user-select: none;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-color: #007bff !important;
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.stage.clickable {
+  &:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+
+    &.succeeded {
+      background-color: rgba(40, 167, 69, 0.2);
+    }
+
+    &.failed {
+      background-color: rgba(220, 53, 69, 0.2);
+    }
+
+    &.in-progress {
+      background-color: rgba(255, 193, 7, 0.2);
+    }
+  }
+}
+
+.job-item.clickable {
+  &:hover {
+    background-color: rgba(0, 123, 255, 0.15) !important;
+  }
+}
+
+// Clickable icon styles
+.clickable-icon {
+  opacity: 0.4;
+  transition: opacity 0.2s ease;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.clickable:hover .clickable-icon {
+  opacity: 1;
+}
+
+.stage-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.job-name {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+// Failed steps styles
+.failed-steps {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  border-radius: 4px;
+}
+
+.failed-steps-title {
+  font-weight: 600;
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.failed-step-item {
+  margin-bottom: 4px;
+
+  strong {
+    color: #dc3545;
+    font-size: 0.8rem;
+  }
+}
+
+.failed-tasks {
+  margin-left: 8px;
+  margin-top: 2px;
+}
+
+.failed-task {
+  font-size: 0.75rem;
+  color: #721c24;
+  margin-bottom: 1px;
+}
+
+.job-status-text {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.jobs-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.job-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+
+  &.completed {
+    color: #155724;
+    background: #d4edda;
+  }
+
+  &.failed {
+    color: #721c24;
+    background: #f8d7da;
+  }
+
+  &.skipped {
+    color: #856404;
+    background: #fff3cd;
+  }
+}
+
+.total-jobs {
+  font-size: 0.75rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.build-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.view-build-link {
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 0.9rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .build-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .build-status {
+    align-items: flex-start;
+  }
+
+  .stages-list,
+  .default-stages {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+// Timeline information styling
+.stage-timeline-info,
+.job-timeline-info {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.stage-detail,
+.job-detail {
+  margin: 2px 0;
+  color: #666;
+
+  strong {
+    color: #333;
+    font-weight: 600;
+  }
+
+  &.errors {
+    color: #721c24;
+    strong {
+      color: #721c24;
+    }
+  }
+
+  &.warnings {
+    color: #856404;
+    strong {
+      color: #856404;
+    }
+  }
+
+  &.issues {
+    color: #0c5460;
+    strong {
+      color: #0c5460;
+    }
+  }
+}
+
+.job-tasks {
+  margin-top: 6px;
+
+  strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #333;
+    font-size: 0.75rem;
+  }
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  margin: 1px 0;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  background: rgba(255, 255, 255, 0.5);
+
+  &.succeeded {
+    color: #155724;
+    background: rgba(212, 237, 218, 0.5);
+  }
+
+  &.failed {
+    color: #721c24;
+    background: rgba(248, 215, 218, 0.5);
+  }
+
+  &.in-progress {
+    color: #0c5460;
+    background: rgba(209, 236, 241, 0.5);
+  }
+
+  &.not-started {
+    color: #6c757d;
+    background: rgba(248, 249, 250, 0.5);
+  }
+}
+
+.task-icon {
+  font-size: 0.6rem;
+  width: 12px;
+  text-align: center;
+}
+
+.task-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-errors,
+.task-warnings {
+  font-size: 0.6rem;
+  padding: 1px 3px;
+  border-radius: 2px;
+  background: rgba(255, 193, 7, 0.2);
+  color: #856404;
+}
+
+.task-errors {
+  background: rgba(220, 53, 69, 0.2);
+  color: #721c24;
+}
+
+.no-timeline-data {
+  padding: 20px;
+  background: rgba(108, 117, 125, 0.1);
+  border-radius: 6px;
+  border-left: 4px solid #6c757d;
+  color: #6c757d;
+  font-style: italic;
+
+  p {
+    margin: 8px 0;
+
+    &:first-child {
+      margin-top: 0;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// Enhanced styling for detailed information
+.variables-details {
+  margin-top: 4px;
+
+  summary {
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: #0066cc;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.variables-content {
+  margin-top: 4px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 3px;
+  border-left: 3px solid #0066cc;
+}
+
+.variable-item {
+  margin: 2px 0;
+  font-size: 0.7rem;
+  color: #555;
+
+  strong {
+    color: #333;
+  }
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.task-details {
+  margin-left: 16px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(0, 0, 0, 0.1);
+  font-size: 0.65rem;
+}
+
+.task-detail {
+  margin: 1px 0;
+  color: #666;
+
+  strong {
+    color: #333;
+    font-weight: 600;
+  }
+
+  &.issues {
+    color: #0c5460;
+    strong {
+      color: #0c5460;
+    }
+  }
+}
+
+// Failed steps styles
+.failed-steps {
+  margin-top: 12px;
+  padding: 8px;
+  background: #fdf2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+}
+
+.failed-steps-title {
+  font-weight: 600;
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.failed-step-item {
+  margin-bottom: 6px;
+
+  strong {
+    color: #dc2626;
+    font-size: 0.8rem;
+    display: block;
+    margin-bottom: 2px;
+  }
+}
+
+.failed-tasks {
+  margin-left: 8px;
+  margin-top: 4px;
+}
+
+.failed-task {
+  color: #991b1b;
+  font-size: 0.75rem;
+  margin-bottom: 2px;
+  padding: 2px 4px;
+  background: rgba(220, 38, 38, 0.1);
+  border-radius: 3px;
+  display: inline-block;
+  margin-right: 4px;
+  margin-bottom: 4px;
+}

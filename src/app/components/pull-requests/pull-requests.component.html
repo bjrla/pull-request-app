@@ -1,0 +1,59 @@
+@if (error) {
+<app-error-message [message]="error"></app-error-message>
+} @if (isLoading) {
+<app-loading></app-loading>
+} @if (!isLoading && !error) {
+<div class="pull-requests">
+  <app-pull-request-summary
+    [pullRequests]="pullRequests"
+    [filteredPullRequests]="filteredPullRequests"
+    [selectedRepositories]="selectedRepositories"
+    [isLoading]="isLoading"
+    [projectSummary]="getProjectSummary()"
+    [suggestions]="prSuggestions"
+    (refreshRequested)="loadPullRequests()"
+    (repositoryFilterChanged)="onRepositorySelectionChanged($event)"
+    (filterCleared)="clearFilter()"
+    (myPullRequestsRequested)="openMyPullRequests($event)"
+  ></app-pull-request-summary>
+
+  @if (filteredPullRequests.length === 0 && selectedRepositories.size === 0) {
+  <app-no-data message="No active pull requests found."></app-no-data>
+  } @if (filteredPullRequests.length === 0 && selectedRepositories.size > 0) {
+  <app-no-data
+    [message]="
+      'No pull requests found for the selected ' +
+      (selectedRepositories.size === 1 ? 'repository' : 'repositories') +
+      '.'
+    "
+  ></app-no-data>
+  } @for (pr of filteredPullRequests; track pr.pullRequestId) {
+  <app-pull-request-card
+    [pullRequest]="pr"
+    [allPullRequests]="pullRequests"
+    (pullRequestClicked)="openPullRequest($event)"
+    (teamsRequested)="openTeamsForPR($event)"
+    (relatedPullRequestClicked)="openPullRequest($event)"
+  ></app-pull-request-card>
+  }
+</div>
+}
+
+<!-- Manage Projects Modal -->
+<app-manage-projects-modal
+  [isOpen]="isAddProjectModalOpen"
+  [currentProjects]="currentProjects"
+  (closeModal)="closeAddProjectModal()"
+  (projectAdded)="onProjectAdded($event)"
+  (projectRemoved)="onProjectRemoved($event)"
+  (patUpdated)="onPATUpdated($event)"
+  (projectsReordered)="onProjectsReordered($event)"
+></app-manage-projects-modal>
+
+<!-- PAT Prompt Modal -->
+<app-pat-prompt-modal
+  [isOpen]="isPATPromptModalOpen"
+  [message]="patPromptMessage"
+  (closeModal)="closePATPromptModal()"
+  (patProvided)="onPATUpdated($event)"
+></app-pat-prompt-modal>

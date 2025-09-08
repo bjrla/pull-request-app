@@ -1,0 +1,49 @@
+{
+  "name": "pull-request-overview",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "concurrently \"ng serve\" \"npm run start:backend\"",
+    "start:frontend": "ng serve",
+    "start:backend": "node src/app/district-easy-logon/backend-server.js",
+    "start:backend:dev": "nodemon src/app/district-easy-logon/backend-server.js",
+    "start-easy-logon": "node ./src/app/district-easy-logon/app.mjs",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^18.2.0",
+    "@angular/common": "^18.2.0",
+    "@angular/compiler": "^18.2.0",
+    "@angular/core": "^18.2.0",
+    "@angular/forms": "^18.2.0",
+    "@angular/platform-browser": "^18.2.0",
+    "@angular/platform-browser-dynamic": "^18.2.0",
+    "@angular/router": "^18.2.0",
+    "chalk": "^5.4.1",
+    "clipboardy": "^2.3.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "puppeteer": "23.7.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.14.10"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^18.2.7",
+    "@angular/cli": "^18.2.7",
+    "@angular/compiler-cli": "^18.2.0",
+    "@types/jasmine": "~5.1.0",
+    "concurrently": "^9.2.1",
+    "jasmine-core": "~5.2.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "nodemon": "^3.1.10",
+    "typescript": "~5.5.2"
+  }
+}
