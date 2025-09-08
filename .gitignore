@@ -40,6 +40,3 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
-
-# Custom ignores
-src/app/district-easy-logon/app.mjs
