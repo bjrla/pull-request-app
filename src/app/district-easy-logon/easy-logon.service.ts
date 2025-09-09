@@ -254,6 +254,48 @@ export class EasyLogonService {
     return this.logonStatus.value;
   }
 
+  /**
+   * Stop any running Easy Logon process
+   */
+  stopEasyLogon(processId?: number): Observable<EasyLogonResponse> {
+    console.log("🔐 Stopping Easy Logon process...", processId);
+
+    this.updateStatus({
+      isRunning: false,
+      message: "Stopping process...",
+    });
+
+    return new Observable((observer) => {
+      this.http
+        .post<EasyLogonResponse>(`${this.apiUrl}/easy-logon/stop`, {
+          processId,
+        })
+        .subscribe({
+          next: (response) => {
+            this.updateStatus({
+              isRunning: false,
+              lastRun: new Date(),
+              lastSuccess: response.success,
+              message: response.success
+                ? "Process stopped"
+                : "Failed to stop process",
+            });
+            observer.next(response);
+            observer.complete();
+          },
+          error: (error) => {
+            this.updateStatus({
+              isRunning: false,
+              lastRun: new Date(),
+              lastSuccess: false,
+              message: `Stop error: ${error.message}`,
+            });
+            observer.error(error);
+          },
+        });
+    });
+  }
+
   private updateStatus(status: Partial<LogonStatus>) {
     const currentStatus = this.logonStatus.value;
     this.logonStatus.next({ ...currentStatus, ...status });

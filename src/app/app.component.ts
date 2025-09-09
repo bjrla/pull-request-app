@@ -29,6 +29,7 @@ export class AppComponent implements OnDestroy {
     "info";
 
   private subscriptions = new Subscription();
+  private easyLogonSubscription: Subscription | null = null;
 
   constructor(
     private router: Router,
@@ -67,6 +68,9 @@ export class AppComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+    if (this.easyLogonSubscription) {
+      this.easyLogonSubscription.unsubscribe();
+    }
   }
 
   // Navigation methods
@@ -132,35 +136,80 @@ export class AppComponent implements OnDestroy {
     );
     this.logonMessageType = "info";
 
-    this.easyLogonService.startEasyLogonWithStream().subscribe({
-      next: (message) => {
-        // Update the UI with the latest message (cleaned of ANSI codes and with timestamp)
-        const cleanMessage = this.stripAnsiCodes(message.message);
-        this.latestLogonMessage = this.formatMessageWithTimestamp(
-          cleanMessage,
-          message.timestamp
-        );
-        this.logonMessageType = message.type;
+    // Cancel any existing subscription before starting a new one
+    if (this.easyLogonSubscription) {
+      this.easyLogonSubscription.unsubscribe();
+      this.easyLogonSubscription = null;
+    }
 
-        // Manually trigger change detection
-        this.cdr.detectChanges();
-
-        if (message.type === "success" && message.message.includes("Token")) {
-          console.log(
-            "🎉 TOKEN SUCCESSFULLY RECEIVED AND COPIED TO CLIPBOARD!"
+    this.easyLogonSubscription = this.easyLogonService
+      .startEasyLogonWithStream()
+      .subscribe({
+        next: (message) => {
+          // Update the UI with the latest message (cleaned of ANSI codes and with timestamp)
+          const cleanMessage = this.stripAnsiCodes(message.message);
+          this.latestLogonMessage = this.formatMessageWithTimestamp(
+            cleanMessage,
+            message.timestamp
           );
-        }
-      },
-      complete: () => {
+          this.logonMessageType = message.type;
+
+          // Manually trigger change detection
+          this.cdr.detectChanges();
+
+          if (message.type === "success" && message.message.includes("Token")) {
+            console.log(
+              "🎉 TOKEN SUCCESSFULLY RECEIVED AND COPIED TO CLIPBOARD!"
+            );
+          }
+        },
+        complete: () => {
+          this.latestLogonMessage = this.formatMessageWithTimestamp(
+            "Easy Logon completed"
+          );
+          this.logonMessageType = "success";
+          this.easyLogonSubscription = null;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          this.latestLogonMessage = this.formatMessageWithTimestamp(
+            `Error: ${error.message || "Unknown error occurred"}`
+          );
+          this.logonMessageType = "error";
+          this.easyLogonSubscription = null;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  // Stop Easy Logon process
+  stopEasyLogon(): void {
+    if (!this.isLogonRunning) {
+      return;
+    }
+
+    // Cancel the streaming subscription first
+    if (this.easyLogonSubscription) {
+      this.easyLogonSubscription.unsubscribe();
+      this.easyLogonSubscription = null;
+    }
+
+    this.latestLogonMessage = this.formatMessageWithTimestamp(
+      "Stopping Easy Logon..."
+    );
+    this.logonMessageType = "info";
+
+    this.easyLogonService.stopEasyLogon().subscribe({
+      next: (response) => {
         this.latestLogonMessage = this.formatMessageWithTimestamp(
-          "Easy Logon completed"
+          response.message || "Easy Logon stopped"
         );
-        this.logonMessageType = "success";
+        this.logonMessageType = response.success ? "success" : "error";
         this.cdr.detectChanges();
       },
       error: (error) => {
         this.latestLogonMessage = this.formatMessageWithTimestamp(
-          `Error: ${error.message || "Unknown error occurred"}`
+          `Stop error: ${error.message || "Unknown error occurred"}`
         );
         this.logonMessageType = "error";
         this.cdr.detectChanges();

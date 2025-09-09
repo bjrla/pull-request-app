@@ -4,6 +4,11 @@ html {
     "Segoe UI Emoji", Segoe UI Symbol, "Noto Color Emoji";
   font-feature-settings: normal;
   -webkit-tap-highlight-color: transparent;
+  /* Set background to match header blue for top overscroll */
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  /* Prevent overscroll bounce completely */
+  overscroll-behavior: none;
+  overflow-x: hidden;
 }
 
 h1,
@@ -25,7 +30,27 @@ html {
   box-sizing: inherit;
 }
 
-body,
+body {
+  padding: 0;
+  margin: 0;
+  /* Stronger overscroll prevention */
+  overscroll-behavior: none;
+  /* Set background to match main content for bottom overscroll */
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  /* Additional iOS Safari fixes */
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Allow scrolling in the main container */
+.app-container {
+  height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: none;
+}
+
 * {
   padding: 0;
   margin: 0;
