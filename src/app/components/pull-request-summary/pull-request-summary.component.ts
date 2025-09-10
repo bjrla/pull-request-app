@@ -102,10 +102,12 @@ export class PullRequestSummaryComponent {
 
   // Get PR suggestions for a specific project/repository
   getSuggestionsForProject(repositoryName: string): PullRequestSuggestion[] {
-    return this.suggestions.filter(
-      (suggestion) =>
-        suggestion.properties.sourceRepository.name === repositoryName
-    );
+    return Array.isArray(this.suggestions)
+      ? this.suggestions.filter(
+          (suggestion) =>
+            suggestion.properties.sourceRepository.name === repositoryName
+        )
+      : [];
   }
 
   // Check if a project has PR suggestions
