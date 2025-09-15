@@ -31,7 +31,8 @@
         type="text"
         class="easy-logon-input"
         maxlength="6"
-        disabled
+        [disabled]="isLogonRunning"
+        [(ngModel)]="userId"
         placeholder="4A1137"
       />
     </div>

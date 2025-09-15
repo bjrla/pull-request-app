@@ -1,6 +1,7 @@
-import { Component, OnDestroy, ChangeDetectorRef } from "@angular/core";
+import { Component, OnDestroy, OnInit, ChangeDetectorRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { Router, RouterOutlet } from "@angular/router";
+import { FormsModule } from "@angular/forms";
 import { ManageProjectsModalComponent } from "./components/add-project-modal/add-project-modal.component";
 import { ProjectConfig } from "./azure-devops/azure-devops.config";
 import { ConfigStorageService } from "./services/config-storage.service";
@@ -10,11 +11,16 @@ import { Subscription } from "rxjs";
 @Component({
   selector: "app-root",
   standalone: true,
-  imports: [CommonModule, RouterOutlet, ManageProjectsModalComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    FormsModule,
+    ManageProjectsModalComponent,
+  ],
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"],
 })
-export class AppComponent implements OnDestroy {
+export class AppComponent implements OnInit, OnDestroy {
   title = "pull-request-overview";
 
   // Project and PAT management
@@ -27,6 +33,16 @@ export class AppComponent implements OnDestroy {
   latestLogonMessage: string = "";
   logonMessageType: "info" | "stdout" | "stderr" | "success" | "error" | "end" =
     "info";
+  private _userId: string = "4A1137";
+
+  get userId(): string {
+    return this._userId;
+  }
+
+  set userId(value: string) {
+    this._userId = value;
+    localStorage.setItem('easyLogonUserId', value);
+  }
 
   private subscriptions = new Subscription();
   private easyLogonSubscription: Subscription | null = null;
@@ -64,6 +80,14 @@ export class AppComponent implements OnDestroy {
         }
       })
     );
+  }
+
+  ngOnInit(): void {
+    // Load userId from localStorage
+    const storedUserId = localStorage.getItem('easyLogonUserId');
+    if (storedUserId) {
+      this._userId = storedUserId;
+    }
   }
 
   ngOnDestroy(): void {
@@ -143,7 +167,7 @@ export class AppComponent implements OnDestroy {
     }
 
     this.easyLogonSubscription = this.easyLogonService
-      .startEasyLogonWithStream()
+      .startEasyLogonWithStream({ userId: this.userId })
       .subscribe({
         next: (message) => {
           // Update the UI with the latest message (cleaned of ANSI codes and with timestamp)
