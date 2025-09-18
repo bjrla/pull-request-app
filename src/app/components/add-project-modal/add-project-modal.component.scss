@@ -150,12 +150,75 @@
       font-weight: 600;
       color: #323130;
       margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .project-repo {
       font-size: 0.85rem;
       color: #605e5c;
       font-family: "Consolas", "Monaco", monospace;
+    }
+
+    &.hidden-project {
+      opacity: 0.6;
+
+      .project-name {
+        color: #605e5c;
+      }
+    }
+
+    .hidden-badge {
+      background: #605e5c;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+  }
+
+  .project-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .toggle-visibility-btn {
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.hide-btn {
+      background: #8a8886; // Lighter grey when project is shown
+
+      &:hover {
+        background: #605e5c;
+        transform: scale(1.05);
+      }
+    }
+
+    &.show-btn {
+      background: #484644; // Darker grey when project is hidden
+
+      &:hover {
+        background: #5e5b58;
+        transform: scale(1.05);
+      }
+    }
+
+    &:active {
+      transform: scale(0.95);
     }
   }
 

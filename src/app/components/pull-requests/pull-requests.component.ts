@@ -21,6 +21,7 @@ import { NoDataComponent } from "../no-data/no-data.component";
 import { ManageProjectsModalComponent } from "../add-project-modal/add-project-modal.component";
 import { PATPromptModalComponent } from "../pat-prompt-modal/pat-prompt-modal.component";
 import { ConfigStorageService } from "../../services/config-storage.service";
+import { RepositoryColorService } from "../../services/repository-color.service";
 
 @Component({
   selector: "app-pull-requests",
@@ -58,30 +59,10 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
 
   private subscriptions = new Subscription();
 
-  // Repository color mapping
-  private repositoryColors = new Map<string, string>();
-  private readonly colorPalette = [
-    "#0078d4", // Azure Blue
-    "#107c10", // Green
-    "#d13438", // Red
-    "#ca5010", // Orange
-    "#8764b8", // Purple
-    "#00bcf2", // Light Blue
-    "#498205", // Dark Green
-    "#e74856", // Bright Red
-    "#ff8c00", // Dark Orange
-    "#5c2d91", // Dark Purple
-    "#038387", // Teal
-    "#8e562e", // Brown
-    "#744da9", // Medium Purple
-    "#486991", // Steel Blue
-    "#c239b3", // Magenta
-    "#567c73", // Dark Teal
-  ];
-
   constructor(
     private azureDevOpsService: AzureDevOpsService,
-    private configService: ConfigStorageService
+    private configService: ConfigStorageService,
+    private repositoryColorService: RepositoryColorService
   ) {}
 
   ngOnInit() {
@@ -151,30 +132,37 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.error = null;
 
-    this.azureDevOpsService
-      .getActivePullRequests(this.currentProjects)
-      .subscribe({
-        next: (response) => {
-          this.pullRequests = response.value || [];
-          this.assignRepositoryColors();
-          this.filteredPullRequests = [...this.pullRequests];
-          this.isLoading = false;
+    // Filter out hidden projects before making API call
+    const visibleProjects = this.currentProjects.filter(
+      (project) => !project.hidden
+    );
 
-          // Also check for PR suggestions
-          this.checkForPullRequestSuggestions();
-        },
-        error: (error) => {
-          console.error("Error loading pull requests:", error);
-          this.error =
-            "Failed to load pull requests. Please check your configuration and try again.";
-          this.isLoading = false;
-        },
-      });
+    this.azureDevOpsService.getActivePullRequests(visibleProjects).subscribe({
+      next: (response) => {
+        this.pullRequests = response.value || [];
+        this.filteredPullRequests = [...this.pullRequests];
+        this.isLoading = false;
+
+        // Also check for PR suggestions (using visible projects only)
+        this.checkForPullRequestSuggestions();
+      },
+      error: (error) => {
+        console.error("Error loading pull requests:", error);
+        this.error =
+          "Failed to load pull requests. Please check your configuration and try again.";
+        this.isLoading = false;
+      },
+    });
   }
 
   private checkForPullRequestSuggestions() {
+    // Filter out hidden projects before making API call
+    const visibleProjects = this.currentProjects.filter(
+      (project) => !project.hidden
+    );
+
     this.azureDevOpsService
-      .getPullRequestSuggestions(this.currentProjects)
+      .getPullRequestSuggestions(visibleProjects)
       .subscribe({
         next: (suggestions) => {
           this.prSuggestions = suggestions;
@@ -202,33 +190,21 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
       });
   }
 
-  private assignRepositoryColors() {
-    const repositories = [
-      ...new Set(this.pullRequests.map((pr) => pr.repository.name)),
-    ];
-    repositories.forEach((repo, index) => {
-      if (!this.repositoryColors.has(repo)) {
-        this.repositoryColors.set(
-          repo,
-          this.colorPalette[index % this.colorPalette.length]
-        );
-      }
-    });
-  }
-
   getRepositoryColor(repositoryName: string): string {
-    return this.repositoryColors.get(repositoryName) || "#0078d4";
+    return this.repositoryColorService.getRepositoryColor(repositoryName);
   }
 
   getProjectSummary(): ProjectSummary[] {
     const summary = new Map<string, number>();
 
-    // Initialize all stored repositories with 0 count
-    this.currentProjects.forEach((project) => {
-      if (project.repository) {
-        summary.set(project.repository, 0);
-      }
-    });
+    // Initialize all visible stored repositories with 0 count
+    this.currentProjects
+      .filter((project) => !project.hidden)
+      .forEach((project) => {
+        if (project.repository) {
+          summary.set(project.repository, 0);
+        }
+      });
 
     // Count PRs by repository name
     this.pullRequests.forEach((pr) => {

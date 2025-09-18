@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { PullRequest } from "../../azure-devops/azure-devops.service";
+import { RepositoryColorService } from "../../services/repository-color.service";
 
 export interface StatusInfo {
   label: string;
@@ -22,47 +23,10 @@ export class PullRequestCardComponent implements OnInit {
   @Output() teamsRequested = new EventEmitter<PullRequest>();
   @Output() relatedPullRequestClicked = new EventEmitter<PullRequest>();
 
-  // Repository color mapping
-  private repositoryColors = new Map<string, string>();
-  private readonly colorPalette = [
-    "#0078d4", // Azure Blue
-    "#107c10", // Green
-    "#d13438", // Red
-    "#ca5010", // Orange
-    "#8764b8", // Purple
-    "#00bcf2", // Light Blue
-    "#498205", // Dark Green
-    "#e74856", // Bright Red
-    "#ff8c00", // Dark Orange
-    "#038387", // Teal
-    "#744da9", // Medium Purple
-    "#486991", // Steel Blue
-    "#c239b3", // Magenta
-    "#567c73", // Dark Teal
-  ];
+  constructor(private repositoryColorService: RepositoryColorService) {}
 
   ngOnInit() {
-    this.assignRepositoryColors();
-  }
-
-  private assignRepositoryColors() {
-    const repositoryName = this.pullRequest.repository.name;
-    if (!this.repositoryColors.has(repositoryName)) {
-      const colorIndex =
-        Math.abs(this.hashCode(repositoryName)) % this.colorPalette.length;
-      const color = this.colorPalette[colorIndex];
-      this.repositoryColors.set(repositoryName, color);
-    }
-  }
-
-  private hashCode(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return hash;
+    // No longer need to assign colors manually - the service handles it
   }
 
   onPullRequestClick() {
@@ -95,13 +59,7 @@ export class PullRequestCardComponent implements OnInit {
   }
 
   getRepositoryColor(repositoryName: string): string {
-    if (!this.repositoryColors.has(repositoryName)) {
-      const colorIndex =
-        Math.abs(this.hashCode(repositoryName)) % this.colorPalette.length;
-      const color = this.colorPalette[colorIndex];
-      this.repositoryColors.set(repositoryName, color);
-    }
-    return this.repositoryColors.get(repositoryName) || this.colorPalette[0];
+    return this.repositoryColorService.getRepositoryColor(repositoryName);
   }
 
   getRepositoryLightColor(repositoryName: string): string {

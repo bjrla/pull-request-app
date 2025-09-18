@@ -88,6 +88,16 @@ export class ManageProjectsModalComponent implements OnInit, OnChanges {
     }
   }
 
+  onToggleProjectVisibility(projectName: string) {
+    const updatedProjects = this.currentProjects.map((project) => {
+      if (project.name === projectName) {
+        return { ...project, hidden: !project.hidden };
+      }
+      return project;
+    });
+    this.projectsReordered.emit(updatedProjects);
+  }
+
   onUpdatePAT() {
     if (this.personalAccessToken.trim()) {
       // Update via ConfigStorageService instead of emitting event

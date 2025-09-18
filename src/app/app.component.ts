@@ -41,7 +41,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   set userId(value: string) {
     this._userId = value;
-    localStorage.setItem('easyLogonUserId', value);
+    localStorage.setItem("easyLogonUserId", value);
   }
 
   private subscriptions = new Subscription();
@@ -84,7 +84,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Load userId from localStorage
-    const storedUserId = localStorage.getItem('easyLogonUserId');
+    const storedUserId = localStorage.getItem("easyLogonUserId");
     if (storedUserId) {
       this._userId = storedUserId;
     }

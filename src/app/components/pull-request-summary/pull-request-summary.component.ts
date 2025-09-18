@@ -4,6 +4,7 @@ import {
   PullRequest,
   PullRequestSuggestion,
 } from "../../azure-devops/azure-devops.service";
+import { RepositoryColorService } from "../../services/repository-color.service";
 
 export interface ProjectSummary {
   project: string;
@@ -32,43 +33,10 @@ export class PullRequestSummaryComponent {
   @Output() myPullRequestsRequested = new EventEmitter<string>();
   @Output() createPRRequested = new EventEmitter<string>();
 
-  // Repository color mapping
-  private repositoryColors = new Map<string, string>();
-  private readonly colorPalette = [
-    "#0078d4", // Azure Blue
-    "#107c10", // Green
-    "#d13438", // Red
-    "#ca5010", // Orange
-    "#8764b8", // Purple
-    "#00bcf2", // Light Blue
-    "#498205", // Dark Green
-    "#e74856", // Bright Red
-    "#ff8c00", // Dark Orange
-    "#038387", // Teal
-    "#744da9", // Medium Purple
-    "#486991", // Steel Blue
-    "#c239b3", // Magenta
-    "#567c73", // Dark Teal
-  ];
-
-  private hashCode(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // Convert to 32bit integer
-    }
-    return hash;
-  }
+  constructor(private repositoryColorService: RepositoryColorService) {}
 
   getRepositoryColor(projectName: string): string {
-    if (!this.repositoryColors.has(projectName)) {
-      const colorIndex =
-        Math.abs(this.hashCode(projectName)) % this.colorPalette.length;
-      const color = this.colorPalette[colorIndex];
-      this.repositoryColors.set(projectName, color);
-    }
-    return this.repositoryColors.get(projectName) || this.colorPalette[0];
+    return this.repositoryColorService.getRepositoryColor(projectName);
   }
 
   onRefresh() {

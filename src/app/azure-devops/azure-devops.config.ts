@@ -1,6 +1,7 @@
 export interface ProjectConfig {
   name: string;
   repository?: string; // Optional: if specified, only fetch PRs from this repository
+  hidden?: boolean; // Optional: if true, project is hidden from display but still tracked
 }
 
 export interface AzureDevOpsConfig {

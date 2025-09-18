@@ -120,7 +120,7 @@
       <strong>Description:</strong>
       <p>{{ cleanDescription(pullRequest.description) }}</p>
     </div>
-    } @if (getRelatedPullRequests(pullRequest).length > 0) {
+    } @if (getRelatedPullRequests(pullRequest).length > 0 && false) {
     <div class="pr-related">
       <strong>Potentially Related:</strong>
       <div class="related-prs">
