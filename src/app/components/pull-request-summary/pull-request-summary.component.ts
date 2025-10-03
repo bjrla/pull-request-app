@@ -26,12 +26,16 @@ export class PullRequestSummaryComponent {
   @Input() isLoading = false;
   @Input() projectSummary: ProjectSummary[] = [];
   @Input() suggestions: PullRequestSuggestion[] = [];
+  @Input() showDrafts = false;
+  @Input() draftCount = 0;
+  @Input() regularCount = 0;
 
   @Output() refreshRequested = new EventEmitter<void>();
   @Output() repositoryFilterChanged = new EventEmitter<string>();
   @Output() filterCleared = new EventEmitter<void>();
   @Output() myPullRequestsRequested = new EventEmitter<string>();
   @Output() createPRRequested = new EventEmitter<string>();
+  @Output() draftsToggled = new EventEmitter<void>();
 
   constructor(private repositoryColorService: RepositoryColorService) {}
 
@@ -108,5 +112,9 @@ export class PullRequestSummaryComponent {
     event.stopPropagation();
     const createPRUrl = this.generateCreatePRUrl(suggestion);
     window.open(createPRUrl, "_blank");
+  }
+
+  onToggleDrafts() {
+    this.draftsToggled.emit();
   }
 }

@@ -21,7 +21,30 @@
 
     .summary-controls {
       display: flex;
-      gap: 0.5rem;
+      align-items: center;
+      gap: 1rem;
+
+      .draft-toggle {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: #605e5c;
+
+        input[type="checkbox"] {
+          margin: 0;
+          transform: scale(1.1);
+        }
+
+        .toggle-text {
+          user-select: none;
+        }
+
+        &:hover {
+          color: #323130;
+        }
+      }
     }
   }
 
@@ -246,6 +269,23 @@
     font-size: 1.1rem;
     border-top: 1px solid #e1e5e9;
     padding-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+
+    .draft-info {
+      font-size: 0.9rem;
+      color: #8a8886;
+      font-weight: normal;
+    }
+
+    .current-view {
+      font-size: 0.85rem;
+      color: #ca5010;
+      font-style: italic;
+    }
 
     .filter-info {
       display: block;

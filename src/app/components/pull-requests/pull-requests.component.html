@@ -11,10 +11,14 @@
     [isLoading]="isLoading"
     [projectSummary]="getProjectSummary()"
     [suggestions]="prSuggestions"
+    [showDrafts]="showDrafts"
+    [draftCount]="getDraftCount()"
+    [regularCount]="getRegularCount()"
     (refreshRequested)="loadPullRequests()"
     (repositoryFilterChanged)="onRepositorySelectionChanged($event)"
     (filterCleared)="clearFilter()"
     (myPullRequestsRequested)="openMyPullRequests($event)"
+    (draftsToggled)="toggleDraftVisibility()"
   ></app-pull-request-summary>
 
   @if (filteredPullRequests.length === 0 && selectedRepositories.size === 0) {

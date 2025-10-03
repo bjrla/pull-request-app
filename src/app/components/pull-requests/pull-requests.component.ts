@@ -1,5 +1,6 @@
 import { Component, OnInit, OnDestroy } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
 import { Subscription } from "rxjs";
 import {
   AzureDevOpsService,
@@ -28,6 +29,7 @@ import { RepositoryColorService } from "../../services/repository-color.service"
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     PullRequestSummaryComponent,
     PullRequestCardComponent,
     LoadingComponent,
@@ -48,6 +50,9 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
 
   // PR Suggestions
   prSuggestions: PullRequestSuggestion[] = [];
+
+  // Draft filtering
+  showDrafts = false;
 
   // Modal state
   isAddProjectModalOpen = false;
@@ -140,7 +145,7 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     this.azureDevOpsService.getActivePullRequests(visibleProjects).subscribe({
       next: (response) => {
         this.pullRequests = response.value || [];
-        this.filteredPullRequests = [...this.pullRequests];
+        this.applyFilters();
         this.isLoading = false;
 
         // Also check for PR suggestions (using visible projects only)
@@ -194,6 +199,37 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     return this.repositoryColorService.getRepositoryColor(repositoryName);
   }
 
+  applyFilters(): void {
+    let filtered = [...this.pullRequests];
+
+    // Filter out drafts if showDrafts is false
+    if (!this.showDrafts) {
+      filtered = filtered.filter((pr) => !pr.isDraft);
+    }
+
+    // Apply repository filtering if any repositories are selected
+    if (this.selectedRepositories.size > 0) {
+      filtered = filtered.filter((pr) =>
+        this.selectedRepositories.has(pr.repository.name)
+      );
+    }
+
+    this.filteredPullRequests = filtered;
+  }
+
+  toggleDraftVisibility(): void {
+    this.showDrafts = !this.showDrafts;
+    this.applyFilters();
+  }
+
+  getDraftCount(): number {
+    return this.pullRequests.filter((pr) => pr.isDraft).length;
+  }
+
+  getRegularCount(): number {
+    return this.pullRequests.filter((pr) => !pr.isDraft).length;
+  }
+
   getProjectSummary(): ProjectSummary[] {
     const summary = new Map<string, number>();
 
@@ -227,17 +263,7 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     } else {
       this.selectedRepositories.add(repositoryName);
     }
-    this.filterPullRequests();
-  }
-
-  private filterPullRequests() {
-    if (this.selectedRepositories.size === 0) {
-      this.filteredPullRequests = [...this.pullRequests];
-    } else {
-      this.filteredPullRequests = this.pullRequests.filter((pr) =>
-        this.selectedRepositories.has(pr.repository.name)
-      );
-    }
+    this.applyFilters();
   }
 
   openAddProjectModal() {
@@ -274,7 +300,7 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
 
   clearFilter() {
     this.selectedRepositories.clear();
-    this.filteredPullRequests = [...this.pullRequests];
+    this.applyFilters();
   }
 
   onProjectAdded(project: ProjectConfig) {
