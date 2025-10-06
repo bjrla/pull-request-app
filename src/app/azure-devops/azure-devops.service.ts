@@ -133,15 +133,30 @@ export class AzureDevOpsService {
     console.log("AzureDevOpsService: PAT updated");
   }
 
-  // Handle HTTP errors and emit authentication errors for 401 responses
+  // Handle HTTP errors and emit authentication errors for all error responses
   private handleHttpError<T>(operation = "operation") {
     return (error: any): Observable<T> => {
       console.error(`${operation} failed:`, error);
+
+      // Emit error message for PAT prompt based on error status
       if (error.status === 401) {
         this.authErrorSubject.next(
           "Authentication failed. Your Personal Access Token may be invalid or expired. Please provide a valid PAT."
         );
+      } else if (error.status === 403) {
+        this.authErrorSubject.next(
+          "Access forbidden. Your Personal Access Token may not have the required permissions. Please provide a valid PAT with proper scopes."
+        );
+      } else if (error.status === 0 || !error.status) {
+        this.authErrorSubject.next(
+          "Network error occurred. Please check your connection and Personal Access Token configuration."
+        );
+      } else {
+        this.authErrorSubject.next(
+          `Error occurred while fetching data (${error.status}). Please verify your Personal Access Token and configuration.`
+        );
       }
+
       // Return empty result to prevent application crashes
       return of({} as T);
     };
