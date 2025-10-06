@@ -67,30 +67,36 @@
     }
   </div>
   <div class="total-count">
-    <strong
-      >Total: {{ pullRequests.length }} active pull request{{
-        pullRequests.length !== 1 ? "s" : ""
-      }}</strong
-    >
-    @if (draftCount > 0) {
-    <span class="draft-info">
-      ({{ regularCount }} regular{{ regularCount !== 1 ? "s" : "" }},
-      {{ draftCount }} draft{{ draftCount !== 1 ? "s" : "" }})
-    </span>
-    } @if (!showDrafts && draftCount > 0) {
-    <span class="current-view"
-      >• {{ draftCount }} draft{{ draftCount !== 1 ? "s" : "" }} hidden</span
-    >
-    } @if (selectedRepositories.size > 0) {
-    <span class="filter-info">
-      (Showing {{ filteredPullRequests.length }} from
-      {{ selectedRepositories.size }} repo{{
-        selectedRepositories.size !== 1 ? "s" : ""
-      }}: {{ getSelectedRepositoriesText() }})
+    <div class="count-line">
+      <strong
+        >Total: {{ pullRequests.length }} active PR{{
+          pullRequests.length !== 1 ? "s" : ""
+        }}</strong
+      >
+      @if (draftCount > 0) {
+      <span class="draft-info">
+        ({{ regularCount }} regular, {{ draftCount }} draft{{
+          draftCount !== 1 ? "s" : ""
+        }})
+      </span>
+      } @if (!showDrafts && draftCount > 0) {
+      <span class="current-view"
+        >• {{ draftCount }} draft{{ draftCount !== 1 ? "s" : "" }} hidden</span
+      >
+      }
+    </div>
+    @if (selectedRepositories.size > 0) {
+    <div class="filter-line">
+      <span class="filter-info">
+        Showing {{ filteredPullRequests.length }} from
+        {{ selectedRepositories.size }} repo{{
+          selectedRepositories.size !== 1 ? "s" : ""
+        }}: {{ getSelectedRepositoriesText() }}
+      </span>
       <button (click)="onClearFilter()" class="clear-filter-btn">
         Clear Filter
       </button>
-    </span>
+    </div>
     }
   </div>
 </div>
