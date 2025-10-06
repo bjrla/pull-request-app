@@ -167,6 +167,98 @@ export class PullRequestCardComponent implements OnInit {
     return { label: `${waiting} Waiting`, class: "review-waiting" };
   }
 
+  getApprovedReviewers(pr: PullRequest): any[] {
+    if (!pr.reviewers) return [];
+    return pr.reviewers.filter((r: any) => r.vote === 10);
+  }
+
+  getRejectedReviewers(pr: PullRequest): any[] {
+    if (!pr.reviewers) return [];
+    return pr.reviewers.filter((r: any) => r.vote === -10 || r.vote === -5);
+  }
+
+  getWaitingReviewers(pr: PullRequest): any[] {
+    if (!pr.reviewers) return [];
+    return pr.reviewers.filter((r: any) => r.vote === 0);
+  }
+
+  hasReviewerDetails(pr: PullRequest): boolean {
+    return pr.reviewers && pr.reviewers.length > 0;
+  }
+
+  getAllReviewersWithStatus(
+    pr: PullRequest
+  ): Array<{ reviewer: any; status: "approved" | "rejected" | "waiting" }> {
+    if (!pr.reviewers) return [];
+
+    return pr.reviewers.map((reviewer) => {
+      if (reviewer.vote === 10) {
+        return { reviewer, status: "approved" as const };
+      } else if (reviewer.vote === -10 || reviewer.vote === -5) {
+        return { reviewer, status: "rejected" as const };
+      } else {
+        return { reviewer, status: "waiting" as const };
+      }
+    });
+  }
+
+  getReviewerProfilePictureUrl(reviewer: any): string {
+    // Azure DevOps typically provides profile pictures via _links.avatar.href
+    // or we can construct it from the unique name
+    if (reviewer._links?.avatar?.href) {
+      return reviewer._links.avatar.href;
+    }
+
+    // Fallback: construct Azure DevOps profile picture URL
+    // Format: https://dev.azure.com/{organization}/_apis/GraphProfile/MemberAvatars/{descriptor}
+    // For simplicity, we'll use a default avatar or initials-based approach
+    return this.getInitialsAvatar(reviewer.displayName || reviewer.uniqueName);
+  }
+
+  private getInitialsAvatar(name: string): string {
+    const initials = name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+
+    // Generate a simple data URL with initials
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext("2d")!;
+
+    // Background color based on name hash
+    const colors = [
+      "#0078d4",
+      "#107c10",
+      "#d13438",
+      "#ca5010",
+      "#8764b8",
+      "#00bcf2",
+    ];
+    const colorIndex = name.length % colors.length;
+    ctx.fillStyle = colors[colorIndex];
+    ctx.fillRect(0, 0, 32, 32);
+
+    // Text
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(initials, 16, 16);
+
+    return canvas.toDataURL();
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img) {
+      img.style.display = "none";
+    }
+  }
+
   getBranchName(refName: string): string {
     return refName.replace("refs/heads/", "");
   }

@@ -6,7 +6,12 @@
   title="Click to open in Azure DevOps"
 >
   <div class="pr-header">
-    <h3 class="pr-title">{{ pullRequest.title }}</h3>
+    <h3 class="pr-title">
+      {{ pullRequest.title }}
+      @if (pullRequest.isDraft) {
+      <span class="pr-draft-indicator">Draft</span>
+      }
+    </h3>
     <div class="pr-actions">
       <button
         class="teams-btn"
@@ -98,9 +103,47 @@
               class="status-dot review-dot"
               [ngClass]="getReviewStatus(pullRequest).class"
             ></span>
-            <strong>Review:</strong>
+            <strong>Reviewers:</strong>
           </span>
-          {{ getReviewStatus(pullRequest).label }}
+          @if (hasReviewerDetails(pullRequest)) {
+          <div class="reviewer-avatars-inline">
+            @for (reviewerInfo of getAllReviewersWithStatus(pullRequest); track
+            reviewerInfo.reviewer.id) {
+            <div
+              class="reviewer-avatar-container"
+              [attr.data-status]="reviewerInfo.status"
+              [title]="
+                reviewerInfo.reviewer.displayName +
+                ' - ' +
+                (reviewerInfo.status === 'approved'
+                  ? 'Approved'
+                  : reviewerInfo.status === 'rejected'
+                  ? 'Rejected'
+                  : 'Waiting for review')
+              "
+            >
+              <img
+                class="reviewer-avatar"
+                [src]="getReviewerProfilePictureUrl(reviewerInfo.reviewer)"
+                [alt]="reviewerInfo.reviewer.displayName"
+                (error)="onImageError($event)"
+              />
+              <div
+                class="status-indicator"
+                [ngClass]="'status-' + reviewerInfo.status"
+              >
+                @if (reviewerInfo.status === 'approved') {
+                <span class="status-icon">✓</span>
+                } @else if (reviewerInfo.status === 'rejected') {
+                <span class="status-icon">✗</span>
+                } @else {
+                <span class="status-icon">⏱</span>
+                }
+              </div>
+            </div>
+            }
+          </div>
+          }
         </span>
       </div>
     </div>
