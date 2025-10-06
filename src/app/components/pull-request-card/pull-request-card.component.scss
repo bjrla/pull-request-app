@@ -161,8 +161,8 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        color: #605e5c;
         font-size: 0.9rem;
-        font-weight: 500;
 
         .status-indicator {
           display: flex;
@@ -170,7 +170,7 @@
           gap: 0.25rem;
 
           strong {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: #323130;
           }
         }
