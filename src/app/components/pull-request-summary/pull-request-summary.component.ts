@@ -23,6 +23,8 @@ export class PullRequestSummaryComponent {
   @Input() pullRequests: PullRequest[] = [];
   @Input() filteredPullRequests: PullRequest[] = [];
   @Input() selectedRepositories: Set<string> = new Set();
+  @Input() selectedAuthors: Set<string> = new Set();
+  @Input() uniqueAuthors: string[] = [];
   @Input() isLoading = false;
   @Input() projectSummary: ProjectSummary[] = [];
   @Input() suggestions: PullRequestSuggestion[] = [];
@@ -32,6 +34,7 @@ export class PullRequestSummaryComponent {
 
   @Output() refreshRequested = new EventEmitter<void>();
   @Output() repositoryFilterChanged = new EventEmitter<string>();
+  @Output() authorFilterChanged = new EventEmitter<string>();
   @Output() filterCleared = new EventEmitter<void>();
   @Output() myPullRequestsRequested = new EventEmitter<string>();
   @Output() createPRRequested = new EventEmitter<string>();
@@ -49,6 +52,10 @@ export class PullRequestSummaryComponent {
 
   onFilterByRepository(project: string) {
     this.repositoryFilterChanged.emit(project);
+  }
+
+  onFilterByAuthor(author: string) {
+    this.authorFilterChanged.emit(author);
   }
 
   onClearFilter() {
@@ -70,6 +77,92 @@ export class PullRequestSummaryComponent {
 
   getSelectedRepositoriesText(): string {
     return Array.from(this.selectedRepositories).join(", ");
+  }
+
+  getSelectedAuthorsText(): string {
+    return Array.from(this.selectedAuthors).join(", ");
+  }
+
+  isAuthorSelected(author: string): boolean {
+    return this.selectedAuthors.has(author);
+  }
+
+  getPRCountForAuthor(author: string): number {
+    return this.pullRequests.filter((pr) => pr.createdBy.displayName === author)
+      .length;
+  }
+
+  getAuthorProfilePictureUrl(author: string): string {
+    // Find the first PR by this author to get their profile data
+    const pr = this.pullRequests.find(
+      (pr) => pr.createdBy.displayName === author
+    );
+    if (!pr) {
+      return this.getInitialsAvatar(author);
+    }
+
+    // Azure DevOps typically provides profile pictures via _links.avatar.href
+    if (pr.createdBy._links?.avatar?.href) {
+      return pr.createdBy._links.avatar.href;
+    }
+
+    // Fallback to initials avatar
+    return this.getInitialsAvatar(
+      pr.createdBy.displayName || pr.createdBy.uniqueName
+    );
+  }
+
+  private getInitialsAvatar(name: string): string {
+    // Check if we're in a browser environment
+    if (typeof document === "undefined") {
+      return ""; // Return empty string for SSR
+    }
+
+    const initials = name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
+
+    // Generate a simple data URL with initials
+    const canvas = document.createElement("canvas");
+    canvas.width = 24;
+    canvas.height = 24;
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      return ""; // Fallback if context is not available
+    }
+
+    // Background color based on name hash
+    const colors = [
+      "#0078d4",
+      "#107c10",
+      "#d13438",
+      "#ca5010",
+      "#8764b8",
+      "#00bcf2",
+    ];
+    const colorIndex = name.length % colors.length;
+    ctx.fillStyle = colors[colorIndex];
+    ctx.fillRect(0, 0, 24, 24);
+
+    // Text
+    ctx.fillStyle = "white";
+    ctx.font = "10px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(initials, 12, 12);
+
+    return canvas.toDataURL();
+  }
+
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target && target.dataset["fallbackName"]) {
+      target.src = this.getInitialsAvatar(target.dataset["fallbackName"]);
+    }
   }
 
   // Get PR suggestions for a specific project/repository

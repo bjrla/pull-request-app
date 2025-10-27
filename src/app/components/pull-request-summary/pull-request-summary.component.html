@@ -66,6 +66,41 @@
     </div>
     }
   </div>
+
+  <!-- Author Filter Section -->
+  @if (uniqueAuthors.length > 1) {
+  <div class="author-filters">
+    <h4>Authors</h4>
+    <div class="author-filter-list">
+      @for (author of uniqueAuthors; track author) {
+      <div
+        class="author-filter-item"
+        [class.selected]="isAuthorSelected(author)"
+        (click)="onFilterByAuthor(author)"
+        [title]="
+          author +
+          ' (' +
+          getPRCountForAuthor(author) +
+          ' PR' +
+          (getPRCountForAuthor(author) !== 1 ? 's' : '') +
+          ')'
+        "
+      >
+        <img
+          class="author-avatar"
+          [src]="getAuthorProfilePictureUrl(author)"
+          [alt]="author"
+          [attr.data-fallback-name]="author"
+          (error)="onImageError($event)"
+        />
+        <span class="author-name">{{ author }}</span>
+        <span class="pr-count">{{ getPRCountForAuthor(author) }}</span>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
   <div class="total-count">
     <div class="count-line">
       <strong
@@ -85,13 +120,18 @@
       >
       }
     </div>
-    @if (selectedRepositories.size > 0) {
+    @if (selectedRepositories.size > 0 || selectedAuthors.size > 0) {
     <div class="filter-line">
       <span class="filter-info">
-        Showing {{ filteredPullRequests.length }} from
-        {{ selectedRepositories.size }} repo{{
+        Showing {{ filteredPullRequests.length }} @if (selectedRepositories.size
+        > 0) { from {{ selectedRepositories.size }} repo{{
           selectedRepositories.size !== 1 ? "s" : ""
-        }}: {{ getSelectedRepositoriesText() }}
+        }}: {{ getSelectedRepositoriesText() }} } @if (selectedRepositories.size
+        > 0 && selectedAuthors.size > 0) { • } @if (selectedAuthors.size > 0) {
+        by {{ selectedAuthors.size }} author{{
+          selectedAuthors.size !== 1 ? "s" : ""
+        }}: {{ getSelectedAuthorsText() }}
+        }
       </span>
       <button (click)="onClearFilter()" class="clear-filter-btn">
         Clear Filter

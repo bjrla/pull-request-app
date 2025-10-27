@@ -8,6 +8,8 @@
     [pullRequests]="pullRequests"
     [filteredPullRequests]="filteredPullRequests"
     [selectedRepositories]="selectedRepositories"
+    [selectedAuthors]="selectedAuthors"
+    [uniqueAuthors]="getUniqueAuthors()"
     [isLoading]="isLoading"
     [projectSummary]="getProjectSummary()"
     [suggestions]="prSuggestions"
@@ -16,18 +18,29 @@
     [regularCount]="getRegularCount()"
     (refreshRequested)="loadPullRequests()"
     (repositoryFilterChanged)="onRepositorySelectionChanged($event)"
+    (authorFilterChanged)="onAuthorSelectionChanged($event)"
     (filterCleared)="clearFilter()"
     (myPullRequestsRequested)="openMyPullRequests($event)"
     (draftsToggled)="toggleDraftVisibility()"
   ></app-pull-request-summary>
 
-  @if (filteredPullRequests.length === 0 && selectedRepositories.size === 0) {
+  @if (filteredPullRequests.length === 0 && selectedRepositories.size === 0 &&
+  selectedAuthors.size === 0) {
   <app-no-data message="No active pull requests found."></app-no-data>
-  } @if (filteredPullRequests.length === 0 && selectedRepositories.size > 0) {
+  } @if (filteredPullRequests.length === 0 && (selectedRepositories.size > 0 ||
+  selectedAuthors.size > 0)) {
   <app-no-data
     [message]="
       'No pull requests found for the selected ' +
-      (selectedRepositories.size === 1 ? 'repository' : 'repositories') +
+      (selectedRepositories.size > 0 && selectedAuthors.size > 0
+        ? 'repositories and authors'
+        : selectedRepositories.size > 0
+        ? selectedRepositories.size === 1
+          ? 'repository'
+          : 'repositories'
+        : selectedAuthors.size === 1
+        ? 'author'
+        : 'authors') +
       '.'
     "
   ></app-no-data>

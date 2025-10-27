@@ -45,6 +45,7 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
   pullRequests: PullRequest[] = [];
   filteredPullRequests: PullRequest[] = [];
   selectedRepositories: Set<string> = new Set();
+  selectedAuthors: Set<string> = new Set();
   isLoading = false;
   error: string | null = null;
 
@@ -214,6 +215,13 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
       );
     }
 
+    // Apply author filtering if any authors are selected
+    if (this.selectedAuthors.size > 0) {
+      filtered = filtered.filter((pr) =>
+        this.selectedAuthors.has(pr.createdBy.displayName)
+      );
+    }
+
     this.filteredPullRequests = filtered;
   }
 
@@ -266,6 +274,24 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  onAuthorSelectionChanged(authorName: string) {
+    // Toggle the author in the selected set
+    if (this.selectedAuthors.has(authorName)) {
+      this.selectedAuthors.delete(authorName);
+    } else {
+      this.selectedAuthors.add(authorName);
+    }
+    this.applyFilters();
+  }
+
+  getUniqueAuthors(): string[] {
+    const authors = new Set<string>();
+    this.pullRequests.forEach((pr) => {
+      authors.add(pr.createdBy.displayName);
+    });
+    return Array.from(authors).sort();
+  }
+
   openAddProjectModal() {
     this.isAddProjectModalOpen = true;
   }
@@ -300,6 +326,7 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
 
   clearFilter() {
     this.selectedRepositories.clear();
+    this.selectedAuthors.clear();
     this.applyFilters();
   }
 

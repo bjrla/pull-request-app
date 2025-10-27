@@ -19,6 +19,11 @@ export interface PullRequest {
   createdBy: {
     displayName: string;
     uniqueName: string;
+    _links?: {
+      avatar?: {
+        href: string;
+      };
+    };
   };
   creationDate: string;
   sourceRefName: string;
