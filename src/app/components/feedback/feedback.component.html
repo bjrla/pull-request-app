@@ -1,0 +1,152 @@
+<div class="feedback-container">
+  <div class="feedback-header">
+    <h1>Customer Feedback</h1>
+    <p class="subtitle">District Platform User Feedback</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Loading feedback...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-state">
+    <div class="error-icon">⚠️</div>
+    <p>{{ error }}</p>
+    <button (click)="loadFeedback()" class="btn btn-primary">Try Again</button>
+  </div>
+
+  <!-- Feedback List -->
+  <div *ngIf="!isLoading && !error" class="feedback-content">
+    <div class="feedback-stats">
+      <div class="stat-card">
+        <span class="stat-number">{{ feedbackList.length }}</span>
+        <span class="stat-label">Total Feedback</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">{{ getCountByPlatform("district") }}</span>
+        <span class="stat-label">District Web</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">{{
+          getCountByPlatform("district-mobile")
+        }}</span>
+        <span class="stat-label">District Mobile</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">{{ getNegativeFeedbackCount() }}</span>
+        <span class="stat-label">Negative Feedback</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-number">{{ getUntranslatedCount() }}</span>
+        <span class="stat-label">Untranslated</span>
+      </div>
+    </div>
+
+    <div class="translation-controls">
+      <button 
+        (click)="translateAllUntranslated()" 
+        class="btn btn-primary"
+        [disabled]="getUntranslatedCount() === 0">
+        <svg viewBox="0 0 24 24" class="btn-icon">
+          <path d="M12.87,15.07L10.33,12.56L10.36,12.53C12.1,10.59 13.34,8.36 14.07,6H17V4H10V2H8V4H1V6H12.17C11.5,7.92 10.44,9.75 9,11.35C8.07,10.32 7.3,9.19 6.69,8H4.69C5.42,9.63 6.42,11.17 7.67,12.56L2.58,17.58L4,19L9,14L12.11,17.11L12.87,15.07ZM18.5,10H16.5L12,22H14L15.12,19H19.87L21,22H23L18.5,10ZM15.88,17L17.5,12.67L19.12,17H15.88Z" fill="currentColor"/>
+        </svg>
+        Translate All ({{ getUntranslatedCount() }})
+      </button>
+    </div>
+
+    <div class="feedback-list">
+      <div
+        *ngFor="let feedback of feedbackList; trackBy: trackByFeedbackId"
+        class="feedback-item"
+      >
+        <div class="feedback-header-item">
+          <div class="feedback-meta">
+            <span
+              class="platform-badge"
+              [style.background-color]="getCategoryColor(feedback.category)"
+            >
+              {{ getPlatformIcon(feedback.platform) }} {{ feedback.platform }}
+            </span>
+            <span class="user-id">{{ feedback.boUserId }}</span>
+            <span class="timestamp">{{ formatDate(feedback.time) }}</span>
+            <span class="sentiment">{{
+              getSentimentIcon(feedback.posneg)
+            }}</span>
+          </div>
+
+          <div
+            *ngIf="feedback.category"
+            class="category-badge"
+            [style.background-color]="getCategoryColor(feedback.category)"
+          >
+            {{ feedback.category }}
+            <span *ngIf="feedback.subCategory"
+              >• {{ feedback.subCategory }}</span
+            >
+          </div>
+        </div>
+
+        <div class="feedback-content-item">
+          <div class="feedback-description">
+            <h3>Original Feedback</h3>
+            <p class="original-text">{{ feedback.description }}</p>
+          </div>
+
+          <!-- Translation Section -->
+          <div class="feedback-translation">
+            <div *ngIf="hasTranslation(feedback)">
+              <h4>
+                Translation 
+                <span *ngIf="feedback.generatedTranslation && !feedback.translatedDescription" class="auto-badge">AUTO</span>
+                <button 
+                  *ngIf="isTranslationFailed(feedback)"
+                  (click)="retryTranslation(feedback)"
+                  class="btn-retry">
+                  🔄 Retry
+                </button>
+              </h4>
+              <p class="translated-text" [class.translation-error]="isTranslationFailed(feedback)">
+                {{ getTranslation(feedback) }}
+              </p>
+            </div>
+            
+            <div *ngIf="!hasTranslation(feedback)" class="no-translation">
+              <div *ngIf="isTranslating(feedback)" class="translating-state">
+                <div class="translation-spinner"></div>
+                <span>Translating...</span>
+              </div>
+              <button 
+                *ngIf="!isTranslating(feedback)"
+                (click)="translateFeedback(feedback)"
+                class="btn btn-translate">
+                <svg viewBox="0 0 24 24" class="btn-icon">
+                  <path d="M12.87,15.07L10.33,12.56L10.36,12.53C12.1,10.59 13.34,8.36 14.07,6H17V4H10V2H8V4H1V6H12.17C11.5,7.92 10.44,9.75 9,11.35C8.07,10.32 7.3,9.19 6.69,8H4.69C5.42,9.63 6.42,11.17 7.67,12.56L2.58,17.58L4,19L9,14L12.11,17.11L12.87,15.07ZM18.5,10H16.5L12,22H14L15.12,19H19.87L21,22H23L18.5,10ZM15.88,17L17.5,12.67L19.12,17H15.88Z" fill="currentColor"/>
+                </svg>
+                Translate
+              </button>
+            </div>
+          </div>
+
+          <div class="feedback-details">
+            <div *ngIf="feedback.language" class="detail-item">
+              <strong>Language:</strong> {{ feedback.language }}
+            </div>
+            <div *ngIf="feedback.assignedShortname" class="detail-item">
+              <strong>Assigned to:</strong> {{ feedback.assignedShortname }}
+            </div>
+            <div *ngIf="feedback.descriptiveCategory" class="detail-item">
+              <strong>Status:</strong>
+              <span
+                class="status-badge"
+                [class]="feedback.descriptiveCategory"
+                >{{ feedback.descriptiveCategory }}</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

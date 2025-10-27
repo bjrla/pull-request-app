@@ -1,4 +1,4 @@
-.pipeline-builds-container {
+.pipeline-runs-container {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
@@ -29,12 +29,13 @@
 .pipeline-name {
   font-weight: 600;
   color: #0066cc;
+  font-size: 0.9rem;
 }
 
 .pipeline-link {
   color: #0066cc;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 
   &:hover {
     text-decoration: underline;
@@ -64,22 +65,41 @@
   }
 }
 
-.builds-list {
+.pipeline-runs-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
-.build-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
+.runs-header {
+  text-align: center;
+  margin-bottom: 20px;
+
+  h3 {
+    color: #333;
+    font-size: 1.2rem;
+    margin: 0;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #0066cc;
+  }
+}
+
+.pipeline-run-row {
+  display: flex;
+  align-items: center;
   padding: 16px;
+  border: 1px solid #e1e5e9;
+  border-radius: 6px;
   background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.2s;
+  transition: all 0.2s;
+  gap: 20px;
+  min-height: 80px;
 
   &:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: #f8f9fa;
+    border-color: #c6c8ca;
   }
 
   &.succeeded {
@@ -95,34 +115,271 @@
   }
 }
 
-.build-header {
+.run-title-section {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.build-title {
+  display: flex;
+  align-items: center;
+
+  .build-link {
+    color: #0366d6;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.2;
+
+    &:hover {
+      color: #0366d6;
+      text-decoration: underline;
+    }
+  }
+}
+
+.build-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  color: #586069;
+
+  .pipeline-name {
+    color: #586069;
+    font-weight: 500;
+  }
+
+  .branch-link,
+  .commit-link {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #0366d6;
+    text-decoration: none;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: background 0.2s;
+
+    &:hover {
+      background: rgba(3, 102, 214, 0.1);
+      text-decoration: none;
+    }
+  }
+
+  .branch-icon,
+  .commit-icon {
+    font-size: 12px;
+  }
+}
+
+.status-section {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-width: 150px;
+}
+
+.stages-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stage-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stage-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  text-decoration: none;
+  transition: all 0.2s;
+
+  &.succeeded {
+    background: #28a745;
+    border-color: #28a745;
+  }
+
+  &.failed {
+    background: #dc3545;
+    border-color: #dc3545;
+  }
+
+  &.in-progress {
+    background: #ffc107;
+    border-color: #ffc107;
+    animation: pulse 2s infinite;
+  }
+
+  &.not-started {
+    background: #6c757d;
+    border-color: #6c757d;
+  }
+
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+.stage-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+
+  .status-icon {
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    line-height: 1;
+  }
+}
+
+.stage-connector {
+  width: 12px;
+  height: 2px;
+  background: #e1e5e9;
+  margin: 0 2px;
+}
+
+.no-stages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .pipeline-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.875rem;
+
+    &.succeeded {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    &.failed {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    &.in-progress {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+      animation: pulse 2s infinite;
+    }
+
+    &:not(.succeeded):not(.failed):not(.in-progress) {
+      background: #e9ecef;
+      color: #6c757d;
+      border: 1px solid #ced4da;
+    }
+
+    .status-icon {
+      font-size: 14px;
+      font-weight: bold;
+      line-height: 1;
+
+      &.success {
+        color: #28a745;
+      }
+
+      &.error {
+        color: #dc3545;
+      }
+
+      &.progress {
+        color: #ffc107;
+      }
+
+      &.pending {
+        color: #6c757d;
+      }
+    }
+
+    .status-text {
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+  }
+}
+
+.timing-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 120px;
+  text-align: right;
+}
+
+.timing-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+  color: #586069;
+
+  .time-icon,
+  .duration-icon {
+    font-size: 12px;
+  }
+
+  .relative-time,
+  .duration {
+    font-weight: 500;
+  }
+}
+
+.run-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
 }
 
-.build-info {
+.run-info {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
 .build-number {
+  font-family: monospace;
   font-weight: 600;
-  font-size: 1.1rem;
-  color: #333;
+  font-size: 1rem;
+  color: #0066cc;
+  background: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
-.build-branch {
+.run-time {
   color: #666;
-  background: #f5f5f5;
-  padding: 2px 8px;
-  border-radius: 12px;
   font-size: 0.85rem;
 }
 
-.build-status {
+.run-status {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -157,9 +414,96 @@
   }
 }
 
-.build-time {
-  font-size: 0.8rem;
+.run-duration {
   color: #666;
+  font-size: 0.8rem;
+}
+.run-details {
+  margin-bottom: 12px;
+  padding: 8px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.branch-info,
+.commit-info,
+.requested-by {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+}
+
+.branch-label,
+.commit-label,
+.requester-label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.branch-name {
+  font-family: monospace;
+  background: #e9ecef;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #495057;
+  font-weight: 600;
+}
+
+.commit-hash {
+  font-family: monospace;
+  background: #f8f9fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.requester-name {
+  color: #333;
+  font-weight: 500;
+}
+
+.run-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.view-run-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  border: 1px solid #0066cc;
+  border-radius: 4px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #0066cc;
+    color: white;
+    text-decoration: none;
+  }
+
+  svg {
+    transition: transform 0.2s;
+  }
+
+  &:hover svg {
+    transform: translate(1px, -1px);
+  }
+}
+
+.run-full-date {
+  font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
 }
 
 .stages-container {
@@ -214,12 +558,15 @@
 @keyframes pulse {
   0% {
     opacity: 1;
+    transform: scale(1);
   }
   50% {
-    opacity: 0.7;
+    opacity: 0.8;
+    transform: scale(1.05);
   }
   100% {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -489,19 +836,29 @@
     align-items: stretch;
   }
 
-  .build-header {
+  .run-header {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
   }
 
-  .build-status {
+  .run-status {
     align-items: flex-start;
   }
 
-  .stages-list,
-  .default-stages {
-    grid-template-columns: repeat(2, 1fr);
+  .run-details {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .run-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .view-run-link {
+    justify-content: center;
   }
 }
 

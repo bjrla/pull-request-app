@@ -1,15 +1,13 @@
 import { Component, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { AzureDevOpsService } from "../../azure-devops/azure-devops.service";
-import {
-  AZURE_DEVOPS_CONFIG,
-  ProjectConfig,
-} from "../../azure-devops/azure-devops.config";
+import { ProjectConfig } from "../../azure-devops/azure-devops.config";
 import { LoadingComponent } from "../loading/loading.component";
 import { ErrorMessageComponent } from "../error-message/error-message.component";
 import { NoDataComponent } from "../no-data/no-data.component";
 import { ConfigStorageService } from "../../services/config-storage.service";
-import { forkJoin, map, catchError, of } from "rxjs";
+import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { AZURE_DEVOPS_CONFIG } from "../../azure-devops/azure-devops.config";
 
 @Component({
   selector: "app-pipeline-builds",
@@ -24,18 +22,18 @@ import { forkJoin, map, catchError, of } from "rxjs";
   styleUrl: "./pipeline-builds.component.scss",
 })
 export class PipelineBuildsComponent implements OnInit {
-  builds: PipelineBuild[] = [];
+  pipelineRuns: PipelineRun[] = [];
   isLoading = false;
   error: string | null = null;
   currentProjects: ProjectConfig[] = [];
 
   constructor(
     private azureDevOpsService: AzureDevOpsService,
-    private configService: ConfigStorageService
+    private configService: ConfigStorageService,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
-    // Get current projects and load pipeline builds if available
     this.currentProjects = this.configService.currentProjects;
 
     if (this.currentProjects.length === 0) {
@@ -43,11 +41,9 @@ export class PipelineBuildsComponent implements OnInit {
         "No projects configured. Please configure projects in the main application.";
       this.isLoading = false;
     } else {
-      // Load pipeline builds - PAT is handled automatically by ConfigStorageService
-      this.loadPipelineBuilds();
+      this.loadPipelineRuns();
     }
 
-    // Subscribe to authentication errors
     this.azureDevOpsService.authError$.subscribe((message) => {
       this.error = message;
       this.isLoading = false;
@@ -55,752 +51,182 @@ export class PipelineBuildsComponent implements OnInit {
   }
 
   private get projectName(): string {
-    return "IB-SS - List of outgoing payments";
+    return "X5K8-Regular-Transfers";
   }
 
-  loadPipelineBuilds() {
-    // Check if we have the required configuration before starting
-    if (this.currentProjects.length === 0) {
-      this.error =
-        "No projects configured. Please configure projects in the main application.";
-      this.isLoading = false;
-      return;
-    }
+  private get repositoryName(): string {
+    return "X5K8-Regular-Transfers";
+  }
 
+  private get pipelineDefinitionId(): number {
+    return 40500;
+  }
+
+  async loadPipelineRuns() {
     this.isLoading = true;
     this.error = null;
 
-    // For now, use hardcoded pipeline configuration since the ProjectConfig
-    // interface doesn't include pipeline information yet
-    const projectName = "IB-SS - List of outgoing payments";
-    const pipelineDefinitionId = 48011;
-
-    // Use the actual Azure DevOps service to fetch pipeline builds for master branch only
-    this.azureDevOpsService
-      .getPipelineBuilds(
-        projectName,
-        pipelineDefinitionId,
-        20,
-        "refs/heads/master"
-      )
-      .subscribe({
-        next: (response) => {
-          // Check if response and response.value exist
-          if (!response || !response.value || !Array.isArray(response.value)) {
-            this.error = "Invalid response format from Azure DevOps API";
-            this.isLoading = false;
-            return;
-          }
-
-          // For each build, fetch the timeline to get real stage and job information
-          const buildTimelines$ = response.value.map((build) =>
-            this.azureDevOpsService
-              .getBuildTimeline(this.projectName, build.id)
-              .pipe(
-                map((timeline) => {
-                  return {
-                    id: build.id,
-                    buildNumber: build.buildNumber,
-                    status: build.status,
-                    result: build.result,
-                    definition: build.definition,
-                    startTime: build.startTime,
-                    finishTime: build.finishTime,
-                    sourceBranch: build.sourceBranch,
-                    queueTime: build.startTime,
-                    url: `${this.azureDevOpsService["config"].baseUrl}/${
-                      this.azureDevOpsService["config"].organization
-                    }/${encodeURIComponent(
-                      this.projectName
-                    )}/_build/results?buildId=${build.id}`,
-                    stages: this.generateStagesFromTimeline(timeline, build),
-                  };
-                }),
-                catchError((error) => {
-                  // Fallback to estimated stages if timeline fails
-                  return of({
-                    id: build.id,
-                    buildNumber: build.buildNumber,
-                    status: build.status,
-                    result: build.result,
-                    definition: build.definition,
-                    startTime: build.startTime,
-                    finishTime: build.finishTime,
-                    sourceBranch: build.sourceBranch,
-                    queueTime: build.startTime,
-                    url: `${this.azureDevOpsService["config"].baseUrl}/${
-                      this.azureDevOpsService["config"].organization
-                    }/${encodeURIComponent(
-                      this.projectName
-                    )}/_build/results?buildId=${build.id}`,
-                    stages: this.generateStagesFromBuild(build),
-                  });
-                })
-              )
-          );
-
-          // Wait for all timeline requests to complete
-          if (buildTimelines$.length === 0) {
-            this.builds = [];
-            this.isLoading = false;
-            return;
-          }
-
-          forkJoin(buildTimelines$).subscribe({
-            next: (buildsWithTimelines) => {
-              this.builds = buildsWithTimelines as PipelineBuild[];
-              this.isLoading = false;
-            },
-            error: (error) => {
-              console.error("Error loading build timelines:", error);
-              // If timeline loading fails, use basic build data with estimated stages
-              this.builds = response.value.map((build) => ({
-                id: build.id,
-                buildNumber: build.buildNumber,
-                status: build.status,
-                result: build.result,
-                definition: build.definition,
-                startTime: build.startTime,
-                finishTime: build.finishTime,
-                sourceBranch: build.sourceBranch,
-                queueTime: build.startTime,
-                url: `${this.azureDevOpsService["config"].baseUrl}/${
-                  this.azureDevOpsService["config"].organization
-                }/${encodeURIComponent(
-                  this.projectName
-                )}/_build/results?buildId=${build.id}`,
-                stages: this.generateStagesFromBuild(build),
-              }));
-              this.isLoading = false;
-            },
-          });
-        },
-        error: (error) => {
-          console.error("Error loading pipeline builds:", error);
-          this.error =
-            "Failed to load pipeline builds. Please check your Azure DevOps configuration and try again.";
-          this.isLoading = false;
-        },
+    try {
+      const headers = new HttpHeaders({
+        Authorization: `Basic ${btoa(":" + this.configService.currentPAT)}`,
+        "Content-Type": "application/json",
       });
-  }
 
-  getAzureDevOpsUrl(): string {
-    if (this.builds.length === 0) {
-      return "#";
-    }
-    const projectName = encodeURIComponent(this.projectName);
-    const definitionId = this.builds[0].definition.id;
-    return `https://azuredevops.danskenet.net/Main/${projectName}/_build?definitionId=${definitionId}`;
-  }
+      // Get pipeline runs using the exact same URL structure that works in Azure DevOps
+      const buildsUrl = `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${this.projectName}/_apis/build/builds?definitions=${this.pipelineDefinitionId}&branchFilter=563430%2C563430%2C563430%2C563430%2C563430%2C563430%2C563430%2C563430&$top=20&api-version=7.0`;
 
-  private generateStagesFromBuild(build: any): PipelineStage[] {
-    // Only return real data, no fake/estimated data
-    console.log(
-      "No timeline data available for build",
-      build.id,
-      "- not showing fake stages"
-    );
-    return [];
-  }
+      console.log("Fetching pipeline runs with URL:", buildsUrl);
 
-  private generateStagesFromTimeline(
-    timeline: any,
-    build: any
-  ): PipelineStage[] {
-    // If timeline is not available or empty, fall back to estimated stages
-    if (!timeline || !timeline.records || timeline.records.length === 0) {
-      return this.generateStagesFromBuild(build);
-    }
+      const buildsResponse = await this.http
+        .get<{ value: any[] }>(buildsUrl, { headers })
+        .toPromise();
 
-    const stages: PipelineStage[] = [];
-    const stageRecords = timeline.records.filter(
-      (record: any) => record.type === "Stage"
-    );
-
-    // Group jobs and tasks by their parent stage
-    const jobsByStage: { [stageId: string]: any[] } = {};
-    const tasksByJob: { [jobId: string]: any[] } = {};
-
-    timeline.records.forEach((record: any) => {
-      if (record.type === "Job" && record.parentId) {
-        if (!jobsByStage[record.parentId]) {
-          jobsByStage[record.parentId] = [];
-        }
-        jobsByStage[record.parentId].push(record);
-      } else if (record.type === "Task" && record.parentId) {
-        if (!tasksByJob[record.parentId]) {
-          tasksByJob[record.parentId] = [];
-        }
-        tasksByJob[record.parentId].push(record);
+      if (!buildsResponse?.value || buildsResponse.value.length === 0) {
+        this.error = "No pipeline runs found.";
+        this.isLoading = false;
+        return;
       }
-    });
 
-    stageRecords.forEach((stageRecord: any, index: number) => {
-      const jobs = jobsByStage[stageRecord.id] || [];
+      console.log(`Found ${buildsResponse.value.length} total pipeline runs`);
 
-      const stageJobs: StageJob[] = jobs.map((job: any) => {
-        const tasks = tasksByJob[job.id] || [];
+      // Filter to only show runs from master branch
+      const masterBranchRuns = buildsResponse.value;
+      // .filter(
+      //   (build: any) =>
+      //     build.sourceBranch === "refs/heads/master" ||
+      //     build.sourceBranch === "master"
+      // );
 
-        return {
-          name: job.name || `Job ${job.order || jobs.indexOf(job) + 1}`,
-          status: this.mapTimelineStatus(job.state),
-          result: this.mapTimelineResult(job.result),
-          startTime: job.startTime,
-          finishTime: job.finishTime,
-          // Add comprehensive job details
-          details: {
-            id: job.id,
-            type: job.type,
-            workerName: job.workerName,
-            queueId: job.queueId,
-            attempt: job.attempt,
-            order: job.order,
-            percentComplete: job.percentComplete,
-            agentName: job.agentName,
-            poolName: job.poolName,
-            identifier: job.identifier,
-            parentId: job.parentId,
-            log: job.log,
-            variables: job.variables,
-            requestedFor: job.requestedFor,
-            previousAttempts: job.previousAttempts || [],
-            issues: job.issues || [],
-            changeId: job.changeId,
-            lastModified: job.lastModified,
-            tasks: tasks.map((task) => ({
-              name: task.name,
-              status: this.mapTimelineStatus(task.state),
-              result: this.mapTimelineResult(task.result),
-              startTime: task.startTime,
-              finishTime: task.finishTime,
-              id: task.id,
-              order: task.order,
-              percentComplete: task.percentComplete,
-              logId: task.log?.id,
-              logUrl: task.log?.url,
-              issues: task.issues || [],
-              errorCount: task.errorCount || 0,
-              warningCount: task.warningCount || 0,
-              type: task.type,
-              identifier: task.identifier,
-              parentId: task.parentId,
-              agentName: task.agentName,
-              workerName: task.workerName,
-              attempt: task.attempt,
-              changeId: task.changeId,
-              lastModified: task.lastModified,
-              task: task.task,
-              variables: task.variables,
-              requestedFor: task.requestedFor,
-              previousAttempts: task.previousAttempts || [],
-            })),
-          },
-        };
-      });
+      console.log(`Found ${masterBranchRuns.length} runs on master branch`);
 
-      // Calculate stage statistics
-      const completedJobs = stageJobs.filter(
-        (job) => job.status === "completed"
-      ).length;
-      const failedJobs = stageJobs.filter(
-        (job) =>
-          job.status === "failed" ||
-          (job.status === "completed" && job.result === "failed")
-      ).length;
-      const skippedJobs = stageJobs.filter(
-        (job) => job.status === "skipped"
-      ).length;
-
-      const stage: PipelineStage = {
-        name: stageRecord.name || `Stage ${index + 1}`,
-        status: this.mapTimelineStatus(stageRecord.state),
-        result: this.mapTimelineResult(stageRecord.result),
-        startTime: stageRecord.startTime,
-        finishTime: stageRecord.finishTime,
-        order: stageRecord.order || index + 1,
-        jobs: stageJobs,
-        totalJobs: stageJobs.length,
-        completedJobs,
-        failedJobs,
-        skippedJobs,
-        // Add comprehensive stage details
-        details: {
-          id: stageRecord.id,
-          type: stageRecord.type,
-          state: stageRecord.state,
-          result: stageRecord.result,
-          percentComplete: stageRecord.percentComplete,
-          attempt: stageRecord.attempt,
-          queueId: stageRecord.queueId,
-          workerName: stageRecord.workerName,
-          previousAttempts: stageRecord.previousAttempts || [],
-          issues: stageRecord.issues || [],
-          errorCount: stageRecord.errorCount || 0,
-          warningCount: stageRecord.warningCount || 0,
-          changeId: stageRecord.changeId,
-          lastModified: stageRecord.lastModified,
-          identifier: stageRecord.identifier,
-          parentId: stageRecord.parentId,
-          agentName: stageRecord.agentName,
-          log: stageRecord.log,
-          variables: stageRecord.variables,
-          environment: stageRecord.environment,
-          refName: stageRecord.refName,
-          requestedFor: stageRecord.requestedFor,
-        },
-      };
-
-      stages.push(stage);
-    });
-
-    // Sort stages by order
-    stages.sort((a, b) => a.order - b.order);
-
-    // If no stages found in timeline, fall back to estimated stages
-    if (stages.length === 0) {
-      return this.generateStagesFromBuild(build);
-    }
-
-    return stages;
-  }
-
-  private mapTimelineStatus(state: string): string {
-    if (!state) return "notStarted";
-
-    switch (state.toLowerCase()) {
-      case "completed":
-        return "completed";
-      case "inprogress":
-      case "running":
-        return "inProgress";
-      case "pending":
-      case "notstarted":
-        return "notStarted";
-      case "skipped":
-        return "skipped";
-      default:
-        return "notStarted";
+      // Convert builds to PipelineRun interface (simplified to avoid 404 errors)
+      this.pipelineRuns = masterBranchRuns.map((build: any) => ({
+        id: build.id,
+        buildNumber: build.buildNumber,
+        status: build.status,
+        result: build.result,
+        sourceBranch: build.sourceBranch,
+        sourceVersion: build.sourceVersion,
+        shortSourceVersion: build.sourceVersion?.substring(0, 8) || "",
+        startTime: build.startTime,
+        finishTime: build.finishTime,
+        queueTime: build.queueTime,
+        definition: build.definition,
+        requestedFor: build.requestedFor,
+        url: `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${this.projectName}/_build/results?buildId=${build.id}`,
+        duration: this.calculateDuration(build.startTime, build.finishTime),
+        commitMessage: build.sourceVersion
+          ? `Commit ${build.sourceVersion.substring(0, 8)}`
+          : "",
+        stages: [], // Simplified to avoid API errors
+      }));
+      this.isLoading = false;
+    } catch (error) {
+      console.error("Error loading pipeline runs:", error);
+      this.error =
+        "Failed to load pipeline runs. Please check your configuration and try again.";
+      this.isLoading = false;
     }
   }
 
-  private mapTimelineResult(result: string): string | undefined {
-    if (!result) return undefined;
+  private calculateDuration(startTime: string, finishTime: string): string {
+    if (!startTime || !finishTime) return "";
 
-    switch (result.toLowerCase()) {
-      case "succeeded":
-        return "succeeded";
-      case "failed":
-      case "partiallysucceeded":
-        return "failed";
-      case "canceled":
-      case "cancelled":
-        return "canceled";
-      case "skipped":
-        return "skipped";
-      default:
-        return result;
+    const start = new Date(startTime);
+    const finish = new Date(finishTime);
+    const duration = Math.round(
+      (finish.getTime() - start.getTime()) / 1000 / 60
+    );
+    return `${duration}m`;
+  }
+
+  formatDate(dateString: string): string {
+    if (!dateString) return "";
+    return new Date(dateString).toLocaleString();
+  }
+
+  formatRelativeDate(dateString: string): string {
+    if (!dateString) return "";
+
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+    );
+
+    if (diffInHours < 1) {
+      return "Just now";
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`;
+    } else if (diffInHours < 48) {
+      return "Yesterday";
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays}d ago`;
     }
   }
 
-  getBuildStatusClass(build: PipelineBuild): string {
-    if (build.status === "completed") {
-      return build.result === "succeeded" ? "succeeded" : "failed";
-    }
-    return "in-progress";
+  getBranchName(sourceBranch: string): string {
+    if (!sourceBranch) return "";
+    return sourceBranch.replace("refs/heads/", "");
   }
 
-  getStatusClass(status: string, result?: string): string {
-    if (status === "completed") {
-      return result === "succeeded" ? "succeeded" : "failed";
+  getStatusClass(run: PipelineRun): string {
+    if (run.status === "completed") {
+      return run.result === "succeeded" ? "succeeded" : "failed";
     }
-    if (status === "inProgress") {
+    if (run.status === "inProgress") {
       return "in-progress";
     }
     return "not-started";
   }
 
-  getStatusText(status: string, result?: string): string {
-    if (status === "completed") {
-      return result === "succeeded" ? "Succeeded" : "Failed";
+  getStatusText(run: PipelineRun): string {
+    if (run.status === "completed") {
+      return run.result === "succeeded" ? "Succeeded" : "Failed";
     }
-    if (status === "inProgress") {
+    if (run.status === "inProgress") {
       return "In Progress";
     }
     return "Not Started";
   }
 
-  getStageStatusClass(stage: PipelineStage): string {
-    if (stage.status === "completed") {
-      return stage.result === "succeeded" ? "succeeded" : "failed";
-    }
-    if (stage.status === "inProgress") {
-      return "in-progress";
-    }
-    return "";
-  }
-
-  getStageStatusText(stage: PipelineStage): string {
-    if (stage.status === "completed") {
-      return stage.result === "succeeded" ? "✓" : "✗";
-    }
-    if (stage.status === "inProgress") {
-      return "⏳";
-    }
-    return "-";
-  }
-
-  getStageStatusFromBuild(build: PipelineBuild): string {
-    if (build.status === "completed") {
-      return build.result === "succeeded" ? "✓" : "✗";
-    }
-    if (build.status === "inProgress") {
-      return "⏳";
-    }
-    return "-";
-  }
-
-  getBranchName(sourceBranch: string): string {
-    return sourceBranch.replace("refs/heads/", "");
-  }
-
-  formatBuildTime(build: PipelineBuild): string {
-    if (build.status === "completed" && build.startTime && build.finishTime) {
-      const start = new Date(build.startTime);
-      const finish = new Date(build.finishTime);
-      const duration = Math.round(
-        (finish.getTime() - start.getTime()) / 1000 / 60
-      );
-      return `${duration}m`;
-    }
-    if (build.status === "inProgress" && build.startTime) {
-      const start = new Date(build.startTime);
-      const now = new Date();
-      const duration = Math.round(
-        (now.getTime() - start.getTime()) / 1000 / 60
-      );
-      return `${duration}m (running)`;
-    }
-    return "";
-  }
-
-  getStageTime(stage: PipelineStage): string {
-    if (stage.startTime && stage.finishTime) {
-      const start = new Date(stage.startTime);
-      const finish = new Date(stage.finishTime);
-      const duration = Math.round(
-        (finish.getTime() - start.getTime()) / 1000 / 60
-      );
-      return `${duration}m`;
-    }
-    if (stage.status === "inProgress" && stage.startTime) {
-      const start = new Date(stage.startTime);
-      const now = new Date();
-      const duration = Math.round(
-        (now.getTime() - start.getTime()) / 1000 / 60
-      );
-      return `${duration}m`;
-    }
-    return "";
-  }
-
-  getDefaultStageClass(build: PipelineBuild, stageName: string): string {
-    if (stageName === "CI") {
-      if (build.status === "completed") {
-        return build.result === "succeeded" ? "succeeded" : "failed";
-      }
-      if (build.status === "inProgress") {
-        return "in-progress";
-      }
-    }
-    return "not-started";
-  }
-
-  getJobStatusClass(job: StageJob): string {
-    switch (job.status) {
-      case "completed":
-        return job.result === "succeeded" ? "job-succeeded" : "job-failed";
-      case "failed":
-        return "job-failed";
-      case "skipped":
-        return "job-skipped";
-      case "inProgress":
-        return "job-in-progress";
-      default:
-        return "job-pending";
-    }
-  }
-
-  getJobIcon(job: StageJob): string {
-    switch (job.status) {
-      case "completed":
-        return job.result === "succeeded" ? "✓" : "✗";
-      case "failed":
-        return "✗";
-      case "skipped":
-        return "⏭";
-      case "inProgress":
-        return "⏳";
-      default:
-        return "⏸";
-    }
-  }
-
-  getJobStatusText(job: StageJob): string {
-    switch (job.status) {
-      case "completed":
-        return job.result === "succeeded" ? "Completed" : "Failed";
-      case "failed":
-        return "Failed";
-      case "skipped":
-        return "Skipped";
-      case "inProgress":
-        return "In Progress";
-      default:
-        return "Pending";
-    }
-  }
-
-  getTaskIcon(task: TaskInfo): string {
-    switch (task.status) {
-      case "completed":
-        return task.result === "succeeded" ? "✓" : "✗";
-      case "failed":
-        return "✗";
-      case "skipped":
-        return "⏭";
-      case "inProgress":
-        return "⏳";
-      default:
-        return "⏸";
-    }
-  }
-
-  // Navigation methods
-  onStageClick(build: PipelineBuild, stage: PipelineStage) {
-    const stageUrl = this.getStageUrl(build, stage);
-    if (stageUrl) {
-      window.open(stageUrl, "_blank");
-    }
-  }
-
-  onJobClick(build: PipelineBuild, stage: PipelineStage, job: StageJob) {
-    const jobUrl = this.getJobUrl(build, stage, job);
-    if (jobUrl) {
-      window.open(jobUrl, "_blank");
-    }
-  }
-
-  private getStageUrl(build: PipelineBuild, stage: PipelineStage): string {
-    const projectName = encodeURIComponent(this.projectName);
-    const buildId = build.id;
-    const stageId = stage.details?.id || stage.name;
-
-    // Azure DevOps URL format for build stages
-    return `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${projectName}/_build/results?buildId=${buildId}&view=logs&j=${stageId}`;
-  }
-
-  private getJobUrl(
-    build: PipelineBuild,
-    stage: PipelineStage,
-    job: StageJob
-  ): string {
-    const projectName = encodeURIComponent(this.projectName);
-    const buildId = build.id;
-    const jobId = job.details?.id || job.name;
-
-    // Azure DevOps URL format for build jobs
-    return `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${projectName}/_build/results?buildId=${buildId}&view=logs&j=${jobId}`;
-  }
-
-  // Helper methods for template
-  getObjectKeys(obj: any): string[] {
-    return obj ? Object.keys(obj) : [];
-  }
-
-  getObjectKeysLength(obj: any): number {
-    return obj ? Object.keys(obj).length : 0;
-  }
-
-  // Get failed steps/tasks from a stage
-  getFailedSteps(
-    stage: PipelineStage
-  ): { jobName: string; failedTasks: TaskInfo[] }[] {
-    if (!stage.jobs || stage.jobs.length === 0) {
-      return [];
-    }
-
-    const failedSteps: { jobName: string; failedTasks: TaskInfo[] }[] = [];
-
-    stage.jobs.forEach((job) => {
-      if (job.details?.tasks && job.details.tasks.length > 0) {
-        const failedTasks = job.details.tasks.filter(
-          (task) =>
-            task.status === "failed" ||
-            (task.status === "completed" && task.result === "failed")
-        );
-
-        if (failedTasks.length > 0) {
-          failedSteps.push({
-            jobName: job.name,
-            failedTasks: failedTasks,
-          });
-        }
-      }
-      // If no tasks but job itself failed, consider the job as a failed step
-      else if (
-        job.status === "failed" ||
-        (job.status === "completed" && job.result === "failed")
-      ) {
-        failedSteps.push({
-          jobName: job.name,
-          failedTasks: [],
-        });
-      }
-    });
-
-    return failedSteps;
-  }
-
-  // Check if stage has failed
-  stageHasFailed(stage: PipelineStage): boolean {
-    return (
-      stage.status === "failed" ||
-      (stage.status === "completed" && stage.result === "failed") ||
-      stage.result === "failed"
-    );
+  getPipelineUrl(run: PipelineRun): string {
+    return run.url;
   }
 }
 
-export interface PipelineBuild {
+export interface PipelineRun {
   id: number;
   buildNumber: string;
   status: string;
   result?: string;
+  sourceBranch: string;
+  sourceVersion: string;
+  shortSourceVersion: string;
+  startTime?: string;
+  finishTime?: string;
+  queueTime?: string;
   definition: {
     name: string;
     id: number;
   };
-  startTime?: string;
-  finishTime?: string;
-  sourceBranch: string;
+  requestedFor: {
+    displayName: string;
+    uniqueName: string;
+  };
+  url: string;
+  duration: string;
+  commitMessage?: string;
   stages?: PipelineStage[];
-  queueTime?: string;
-  url?: string;
 }
 
 export interface PipelineStage {
+  id: string;
   name: string;
   status: string;
   result?: string;
   startTime?: string;
   finishTime?: string;
-  order: number;
-  jobs?: StageJob[];
-  totalJobs?: number;
-  completedJobs?: number;
-  failedJobs?: number;
-  skippedJobs?: number;
-  details?: {
-    id?: string;
-    type?: string;
-    state?: string;
-    result?: string;
-    percentComplete?: number;
-    attempt?: number;
-    queueId?: number;
-    workerName?: string;
-    previousAttempts?: any[];
-    issues?: any[];
-    errorCount?: number;
-    warningCount?: number;
-    changeId?: string;
-    lastModified?: string;
-    identifier?: string;
-    parentId?: string;
-    agentName?: string;
-    log?: {
-      id?: number;
-      url?: string;
-    };
-    variables?: { [key: string]: any };
-    environment?: {
-      name?: string;
-      id?: number;
-    };
-    refName?: string;
-    requestedFor?: {
-      displayName?: string;
-      uniqueName?: string;
-    };
-  };
-}
-
-export interface StageJob {
-  name: string;
-  status: string; // 'completed', 'failed', 'skipped', 'inProgress'
-  result?: string;
-  startTime?: string;
-  finishTime?: string;
-  details?: {
-    id?: string;
-    type?: string;
-    workerName?: string;
-    queueId?: number;
-    attempt?: number;
-    order?: number;
-    percentComplete?: number;
-    tasks?: TaskInfo[];
-    agentName?: string;
-    poolName?: string;
-    identifier?: string;
-    parentId?: string;
-    log?: {
-      id?: number;
-      url?: string;
-    };
-    variables?: { [key: string]: any };
-    requestedFor?: {
-      displayName?: string;
-      uniqueName?: string;
-    };
-    previousAttempts?: any[];
-    issues?: any[];
-    changeId?: string;
-    lastModified?: string;
-  };
-}
-
-export interface TaskInfo {
-  name: string;
-  status: string;
-  result?: string;
-  startTime?: string;
-  finishTime?: string;
-  id?: string;
-  order?: number;
-  percentComplete?: number;
-  logId?: string;
-  logUrl?: string;
-  issues?: any[];
-  errorCount?: number;
-  warningCount?: number;
-  type?: string;
-  identifier?: string;
-  parentId?: string;
-  agentName?: string;
-  workerName?: string;
-  attempt?: number;
-  changeId?: string;
-  lastModified?: string;
-  task?: {
-    id?: string;
-    name?: string;
-    version?: string;
-  };
-  variables?: { [key: string]: any };
-  requestedFor?: {
-    displayName?: string;
-    uniqueName?: string;
-  };
-  previousAttempts?: any[];
+  duration: string;
 }

@@ -1,248 +1,111 @@
-<div class="pipeline-builds-container"></div>
-<div class="header-section">
-  <h2>Master Branch - Pipeline Builds Since Last Deploy to Production</h2>
-  <div class="pipeline-info">
-    <span class="pipeline-name">{{
-      builds.length > 0 ? builds[0].definition.name : "Loading pipeline..."
-    }}</span>
-    <a
-      [href]="getAzureDevOpsUrl()"
-      target="_blank"
-      class="pipeline-link"
-      [class.disabled]="builds.length === 0"
-    >
-      View in Azure DevOps
-    </a>
-  </div>
-  <button
-    class="refresh-btn"
-    (click)="loadPipelineBuilds()"
-    [disabled]="isLoading"
-    type="button"
-  >
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M4 4V9H4.582M4.582 9C5.24585 7.35812 6.43568 5.9829 7.96503 5.08985C9.49438 4.1968 11.2768 3.8379 13.033 4.06532C14.7891 4.29274 16.4198 5.09676 17.6694 6.35377C18.919 7.61079 19.7168 9.24692 19.9382 11.0064C20.1596 12.7659 19.7936 14.5463 18.8943 16.0711C17.995 17.5958 16.6059 18.7795 14.9581 19.4351C13.3103 20.0907 11.4956 20.1789 9.79471 19.6877C8.09382 19.1965 6.59716 18.1555 5.5 16.7M4.582 9H9"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-    </svg>
-    Refresh
-  </button>
-</div>
-
-@if (error) {
-<app-error-message [message]="error"></app-error-message>
-} @if (isLoading) {
-<app-loading></app-loading>
-} @if (!isLoading && !error && builds.length === 0) {
-<app-no-data
-  message="No pipeline builds found since last production deploy."
-></app-no-data>
-} @if (!isLoading && !error && builds.length > 0) {
-<div class="builds-list">
-  @for (build of builds; track build.id) {
-  <div class="build-card" [class]="getBuildStatusClass(build)">
-    <div class="build-header">
-      <div class="build-info">
-        <span class="build-number">{{ build.buildNumber }}</span>
-        <span class="build-branch">{{
-          getBranchName(build.sourceBranch)
-        }}</span>
-      </div>
-      <div class="build-status">
-        <span
-          class="status-badge"
-          [class]="getStatusClass(build.status, build.result)"
-        >
-          {{ getStatusText(build.status, build.result) }}
-        </span>
-        <span class="build-time">{{ formatBuildTime(build) }}</span>
-      </div>
-    </div>
-
-    @if (build.stages && build.stages.length > 0) {
-    <div class="stages-container">
-      <h4>Pipeline Stages:</h4>
-      <div class="stages-list">
-        @for (stage of build.stages; track stage.name) {
-        <div
-          class="stage clickable"
-          [class]="getStageStatusClass(stage)"
-          (click)="onStageClick(build, stage)"
-          title="Click to view stage in Azure DevOps"
-        >
-          <div class="stage-info">
-            <div class="stage-name">
-              {{ stage.name }}
-              <svg
-                class="clickable-icon"
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <polyline
-                  points="15,3 21,3 21,9"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-                <line
-                  x1="10"
-                  y1="14"
-                  x2="21"
-                  y2="3"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </div>
-            <div class="stage-status">
-              {{ getStageStatusText(stage) }}
-            </div>
-            @if (stage.startTime && stage.finishTime) {
-            <div class="stage-duration">{{ getStageTime(stage) }}</div>
-            }
-
-            <!-- Show failed steps if stage failed -->
-            @if (stageHasFailed(stage)) { @if (getFailedSteps(stage).length > 0)
-            {
-            <div class="failed-steps">
-              <div class="failed-steps-title">❌ Failed Steps:</div>
-              @for (failedStep of getFailedSteps(stage); track
-              failedStep.jobName) {
-              <div class="failed-step-item">
-                <strong>{{ failedStep.jobName }}</strong>
-                @if (failedStep.failedTasks.length > 0) {
-                <div class="failed-tasks">
-                  @for (task of failedStep.failedTasks; track task.name) {
-                  <div class="failed-task">• {{ task.name }}</div>
-                  }
-                </div>
-                }
-              </div>
-              }
-            </div>
-            } }
-
-            <!-- Show jobs in simplified format -->
-            @if (stage.jobs && stage.jobs.length > 0) {
-            <div class="stage-jobs">
-              <div class="jobs-list">
-                @for (job of stage.jobs; track job.name) {
-                <div
-                  class="job-item clickable"
-                  [class]="getJobStatusClass(job)"
-                  (click)="onJobClick(build, stage, job)"
-                  title="Click to view job logs in Azure DevOps"
-                >
-                  <div class="job-status-icon">{{ getJobIcon(job) }}</div>
-                  <div class="job-details">
-                    <div class="job-name">
-                      {{ job.name }}
-                      <svg
-                        class="clickable-icon"
-                        width="10"
-                        height="10"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <path
-                          d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                        <polyline
-                          points="15,3 21,3 21,9"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                        <line
-                          x1="10"
-                          y1="14"
-                          x2="21"
-                          y2="3"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
-                    </div>
-                    <div class="job-status-text">
-                      {{ getJobStatusText(job) }}
-                    </div>
-                  </div>
-                </div>
-                }
-              </div>
-            </div>
-            } @else if (stage.totalJobs && stage.totalJobs > 0) {
-            <!-- Show summary when individual jobs not available -->
-            <div class="stage-jobs">
-              <div class="jobs-summary">
-                <span class="job-count completed" title="Completed Jobs">
-                  ✓ {{ stage.completedJobs || 0 }}
-                </span>
-                @if (stage.failedJobs && stage.failedJobs > 0) {
-                <span class="job-count failed" title="Failed Jobs">
-                  ✗ {{ stage.failedJobs }}
-                </span>
-                } @if (stage.skippedJobs && stage.skippedJobs > 0) {
-                <span class="job-count skipped" title="Skipped Jobs">
-                  ⏭ {{ stage.skippedJobs }}
-                </span>
-                }
-                <span class="total-jobs">/ {{ stage.totalJobs }}</span>
-              </div>
-            </div>
-            }
-          </div>
-        </div>
-        }
-      </div>
-    </div>
-    } @else {
-    <div class="no-timeline-data">
-      <p>
-        <em>No timeline data available from Azure DevOps for this build.</em>
-      </p>
-      <p>
-        This usually means the build is very recent or the timeline API returned
-        empty data.
-      </p>
-    </div>
-    } @if (build.url) {
-    <div class="build-actions">
-      <a [href]="build.url" target="_blank" class="view-build-link">
-        View Build Details
+<div class="pipeline-runs-container">
+  <div class="header-section">
+    <h2>Pipeline Runs - X5K8 Regular Transfers</h2>
+    <div class="pipeline-info">
+      <span class="pipeline-name">X5K8.RegularTransfers.WebApp</span>
+      <a
+        href="https://azuredevops.danskenet.net/Main/X5K8-Regular-Transfers/_build?definitionId=40500"
+        target="_blank"
+        class="pipeline-link"
+      >
+        View in Azure DevOps
       </a>
+    </div>
+    <button
+      class="refresh-btn"
+      (click)="loadPipelineRuns()"
+      [disabled]="isLoading"
+      type="button"
+    >
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M4 4V9H4.582M4.582 9C5.24585 7.35812 6.43568 5.9829 7.96503 5.08985C9.49438 4.1968 11.2768 3.8379 13.033 4.06532C14.7891 4.29274 16.4198 5.09676 17.6694 6.35377C18.919 7.61079 19.7168 9.24692 19.9382 11.0064C20.1596 12.7659 19.7936 14.5463 18.8943 16.0711C17.995 17.5958 16.6059 18.7795 14.9581 19.4351C13.3103 20.0907 11.4956 20.1789 9.79471 19.6877C8.09382 19.1965 6.59716 18.1555 5.5 16.7M4.582 9H9"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      Refresh
+    </button>
+  </div>
+
+  @if (error) {
+  <app-error-message [message]="error"></app-error-message>
+  } @if (isLoading) {
+  <app-loading></app-loading>
+  } @if (!isLoading && !error && pipelineRuns.length === 0) {
+  <app-no-data message="No pipeline runs found."></app-no-data>
+  } @if (!isLoading && !error && pipelineRuns.length > 0) {
+  <div class="pipeline-runs-list">
+    <div class="runs-header">
+      <h3>{{ pipelineRuns.length }} pipeline runs</h3>
+    </div>
+
+    @for (run of pipelineRuns; track run.id) {
+    <div class="pipeline-run-row" [class]="getStatusClass(run)">
+      <!-- Build Number and Title -->
+      <div class="run-title-section">
+        <div class="build-title">
+          <a [href]="getPipelineUrl(run)" target="_blank" class="build-link">
+            {{ run.buildNumber }} {{ run.commitMessage || "Pipeline Run" }}
+          </a>
+        </div>
+        <div class="build-meta">
+          <span class="pipeline-name"
+            >Individual CI for {{ run.requestedFor.displayName }}</span
+          >
+          <a [href]="getPipelineUrl(run)" target="_blank" class="branch-link">
+            <span class="branch-icon">🌿</span>
+            {{ getBranchName(run.sourceBranch) }}
+          </a>
+          <a [href]="getPipelineUrl(run)" target="_blank" class="commit-link">
+            <span class="commit-icon">📝</span>
+            {{ run.shortSourceVersion }}
+          </a>
+        </div>
+      </div>
+
+      <!-- Pipeline Status -->
+      <div class="status-section">
+        <span class="pipeline-status" [class]="getStatusClass(run)">
+          @switch (getStatusClass(run)) { @case ('succeeded') {
+          <span class="status-icon success">✓</span>
+          <span class="status-text">Succeeded</span>
+          } @case ('failed') {
+          <span class="status-icon error">✗</span>
+          <span class="status-text">Failed</span>
+          } @case ('in-progress') {
+          <span class="status-icon progress">⏳</span>
+          <span class="status-text">In Progress</span>
+          } @default {
+          <span class="status-icon pending">⏸</span>
+          <span class="status-text">{{ run.status || "Pending" }}</span>
+          } }
+        </span>
+      </div>
+
+      <!-- Timing Information -->
+      <div class="timing-section">
+        <div class="timing-item">
+          <span class="time-icon">🕐</span>
+          <span class="relative-time">{{
+            formatRelativeDate(run.finishTime || run.startTime || "")
+          }}</span>
+        </div>
+        <div class="timing-item">
+          <span class="duration-icon">⏱</span>
+          <span class="duration">{{ run.duration }}</span>
+        </div>
+      </div>
     </div>
     }
   </div>
   }
 </div>
-}
