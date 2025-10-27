@@ -128,13 +128,17 @@ export class FeedbackComponent implements OnInit {
   }
 
   getUntranslatedCount(): number {
-    return this.feedbackList.filter((item) => 
-      !item.translatedDescription && !item.generatedTranslation
+    return this.feedbackList.filter(
+      (item) => !item.translatedDescription && !item.generatedTranslation
     ).length;
   }
 
   translateFeedback(feedback: FeedbackItem): void {
-    if (feedback.translatedDescription || feedback.generatedTranslation || this.translatingItems.has(feedback.id)) {
+    if (
+      feedback.translatedDescription ||
+      feedback.generatedTranslation ||
+      this.translatingItems.has(feedback.id)
+    ) {
       return;
     }
 
@@ -147,37 +151,50 @@ export class FeedbackComponent implements OnInit {
       target: "en",
       format: "text",
       alternatives: 3,
-      api_key: ""
+      api_key: "",
     };
 
-    this.http.post<TranslationResponse>("https://libretranslate.com/translate", translationRequest, {
-      headers: { "Content-Type": "application/json" }
-    }).subscribe({
-      next: (response) => {
-        feedback.generatedTranslation = response.translatedText;
-        feedback.isTranslating = false;
-        this.translatingItems.delete(feedback.id);
-      },
-      error: (error) => {
-        console.error('Translation failed:', error);
-        feedback.isTranslating = false;
-        this.translatingItems.delete(feedback.id);
-        
-        // Set a fallback message for failed translations
-        if (error.status === 0) {
-          feedback.generatedTranslation = "[Translation failed: CORS or network error]";
-        } else if (error.status === 429) {
-          feedback.generatedTranslation = "[Translation failed: Rate limit exceeded]";
-        } else {
-          feedback.generatedTranslation = `[Translation failed: ${error.status || 'Unknown error'}]`;
+    this.http
+      .post<TranslationResponse>(
+        "https://libretranslate.com/translate",
+        translationRequest,
+        {
+          headers: { "Content-Type": "application/json" },
         }
-      }
-    });
+      )
+      .subscribe({
+        next: (response) => {
+          feedback.generatedTranslation = response.translatedText;
+          feedback.isTranslating = false;
+          this.translatingItems.delete(feedback.id);
+        },
+        error: (error) => {
+          console.error("Translation failed:", error);
+          feedback.isTranslating = false;
+          this.translatingItems.delete(feedback.id);
+
+          // Set a fallback message for failed translations
+          if (error.status === 0) {
+            feedback.generatedTranslation =
+              "[Translation failed: CORS or network error]";
+          } else if (error.status === 429) {
+            feedback.generatedTranslation =
+              "[Translation failed: Rate limit exceeded]";
+          } else {
+            feedback.generatedTranslation = `[Translation failed: ${
+              error.status || "Unknown error"
+            }]`;
+          }
+        },
+      });
   }
 
   translateAllUntranslated(): void {
-    const untranslatedItems = this.feedbackList.filter(item => 
-      !item.translatedDescription && !item.generatedTranslation && !this.translatingItems.has(item.id)
+    const untranslatedItems = this.feedbackList.filter(
+      (item) =>
+        !item.translatedDescription &&
+        !item.generatedTranslation &&
+        !this.translatingItems.has(item.id)
     );
 
     untranslatedItems.forEach((item, index) => {
@@ -193,7 +210,9 @@ export class FeedbackComponent implements OnInit {
   }
 
   getTranslation(feedback: FeedbackItem): string {
-    return feedback.translatedDescription || feedback.generatedTranslation || '';
+    return (
+      feedback.translatedDescription || feedback.generatedTranslation || ""
+    );
   }
 
   isTranslating(feedback: FeedbackItem): boolean {
@@ -201,7 +220,10 @@ export class FeedbackComponent implements OnInit {
   }
 
   isTranslationFailed(feedback: FeedbackItem): boolean {
-    return !!(feedback.generatedTranslation && feedback.generatedTranslation.startsWith('[Translation failed'));
+    return !!(
+      feedback.generatedTranslation &&
+      feedback.generatedTranslation.startsWith("[Translation failed")
+    );
   }
 
   retryTranslation(feedback: FeedbackItem): void {
