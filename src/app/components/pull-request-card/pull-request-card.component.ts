@@ -1,6 +1,9 @@
 import { Component, Input, Output, EventEmitter, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { PullRequest } from "../../azure-devops/azure-devops.service";
+import {
+  PullRequest,
+  AzureDevOpsService,
+} from "../../azure-devops/azure-devops.service";
 import { RepositoryColorService } from "../../services/repository-color.service";
 
 export interface StatusInfo {
@@ -23,7 +26,10 @@ export class PullRequestCardComponent implements OnInit {
   @Output() teamsRequested = new EventEmitter<PullRequest>();
   @Output() relatedPullRequestClicked = new EventEmitter<PullRequest>();
 
-  constructor(private repositoryColorService: RepositoryColorService) {}
+  constructor(
+    private repositoryColorService: RepositoryColorService,
+    private azureDevOpsService: AzureDevOpsService
+  ) {}
 
   ngOnInit() {
     // No longer need to assign colors manually - the service handles it
@@ -36,6 +42,21 @@ export class PullRequestCardComponent implements OnInit {
   onTeamsClick(event: Event) {
     event.stopPropagation();
     this.teamsRequested.emit(this.pullRequest);
+  }
+
+  onCheckboxChange(event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    this.azureDevOpsService.togglePRSelection(this.pullRequest);
+  }
+
+  isSelected(): boolean {
+    return this.azureDevOpsService.isSelected(this.pullRequest);
+  }
+
+  isSelectionDisabled(): boolean {
+    const selectedCount = this.azureDevOpsService.getSelectedCount();
+    return selectedCount >= 2 && !this.isSelected();
   }
 
   onRelatedPullRequestClick(relatedPr: PullRequest, event: Event) {

@@ -8,6 +8,7 @@ import {
   catchError,
   of,
   Subject,
+  BehaviorSubject,
 } from "rxjs";
 import { AZURE_DEVOPS_CONFIG, ProjectConfig } from "./azure-devops.config";
 
@@ -129,6 +130,10 @@ export class AzureDevOpsService {
   // Authentication error handling
   private authErrorSubject = new Subject<string>();
   public authError$ = this.authErrorSubject.asObservable();
+
+  // Multi-PR selection functionality
+  private selectedPRsSubject = new BehaviorSubject<PullRequest[]>([]);
+  public selectedPRs$ = this.selectedPRsSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
@@ -836,5 +841,73 @@ export class AzureDevOpsService {
         )(error);
       })
     );
+  }
+
+  // Multi-PR selection methods
+  togglePRSelection(pr: PullRequest): void {
+    const currentSelection = this.selectedPRsSubject.value;
+    const existingIndex = currentSelection.findIndex(
+      (selectedPR) =>
+        selectedPR.pullRequestId === pr.pullRequestId &&
+        selectedPR.projectName === pr.projectName
+    );
+
+    if (existingIndex >= 0) {
+      // Remove if already selected
+      const updatedSelection = currentSelection.filter(
+        (_, index) => index !== existingIndex
+      );
+      this.selectedPRsSubject.next(updatedSelection);
+    } else {
+      // Add to selection only if we haven't reached the limit of 2
+      if (currentSelection.length < 2) {
+        this.selectedPRsSubject.next([...currentSelection, pr]);
+      }
+    }
+  }
+
+  selectPR(pr: PullRequest): void {
+    const currentSelection = this.selectedPRsSubject.value;
+    const isAlreadySelected = currentSelection.some(
+      (selectedPR) =>
+        selectedPR.pullRequestId === pr.pullRequestId &&
+        selectedPR.projectName === pr.projectName
+    );
+
+    if (!isAlreadySelected && currentSelection.length < 2) {
+      this.selectedPRsSubject.next([...currentSelection, pr]);
+    }
+  }
+
+  deselectPR(pr: PullRequest): void {
+    const currentSelection = this.selectedPRsSubject.value;
+    const updatedSelection = currentSelection.filter(
+      (selectedPR) =>
+        !(
+          selectedPR.pullRequestId === pr.pullRequestId &&
+          selectedPR.projectName === pr.projectName
+        )
+    );
+    this.selectedPRsSubject.next(updatedSelection);
+  }
+
+  clearSelectedPRs(): void {
+    this.selectedPRsSubject.next([]);
+  }
+
+  getSelectedPRs(): PullRequest[] {
+    return this.selectedPRsSubject.value;
+  }
+
+  isSelected(pr: PullRequest): boolean {
+    return this.selectedPRsSubject.value.some(
+      (selectedPR) =>
+        selectedPR.pullRequestId === pr.pullRequestId &&
+        selectedPR.projectName === pr.projectName
+    );
+  }
+
+  getSelectedCount(): number {
+    return this.selectedPRsSubject.value.length;
   }
 }

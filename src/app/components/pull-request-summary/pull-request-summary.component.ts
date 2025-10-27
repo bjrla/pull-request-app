@@ -33,6 +33,7 @@ export class PullRequestSummaryComponent {
   @Input() draftCount = 0;
   @Input() regularCount = 0;
   @Input() pinnedAuthors: Set<string> = new Set();
+  @Input() selectedPRs: PullRequest[] = [];
 
   @Output() refreshRequested = new EventEmitter<void>();
   @Output() repositoryFilterChanged = new EventEmitter<string>();
@@ -42,6 +43,8 @@ export class PullRequestSummaryComponent {
   @Output() createPRRequested = new EventEmitter<string>();
   @Output() draftsToggled = new EventEmitter<void>();
   @Output() authorPinToggled = new EventEmitter<string>();
+  @Output() multiPRPostRequested = new EventEmitter<void>();
+  @Output() clearSelectedPRs = new EventEmitter<void>();
 
   constructor(
     private repositoryColorService: RepositoryColorService,
@@ -217,10 +220,18 @@ export class PullRequestSummaryComponent {
     this.draftsToggled.emit();
   }
 
-  onToggleAuthorPin(author: string, event: Event) {
+  onToggleAuthorPin(author: string, event: Event): void {
     event.stopPropagation();
     this.pinnedAuthorsService.togglePin(author);
     this.authorPinToggled.emit(author);
+  }
+
+  onMultiPRPost(): void {
+    this.multiPRPostRequested.emit();
+  }
+
+  onClearSelectedPRs(): void {
+    this.clearSelectedPRs.emit();
   }
 
   isAuthorPinned(author: string): boolean {

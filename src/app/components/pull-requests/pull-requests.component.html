@@ -17,6 +17,7 @@
     [draftCount]="getDraftCount()"
     [regularCount]="getRegularCount()"
     [pinnedAuthors]="pinnedAuthors"
+    [selectedPRs]="selectedPRs"
     (refreshRequested)="loadPullRequests()"
     (repositoryFilterChanged)="onRepositorySelectionChanged($event)"
     (authorFilterChanged)="onAuthorSelectionChanged($event)"
@@ -24,6 +25,8 @@
     (myPullRequestsRequested)="openMyPullRequests($event)"
     (draftsToggled)="toggleDraftVisibility()"
     (authorPinToggled)="onAuthorPinToggled($event)"
+    (multiPRPostRequested)="openTeamsForMultiplePRs()"
+    (clearSelectedPRs)="clearSelectedPRs()"
   ></app-pull-request-summary>
 
   @if (filteredPullRequests.length === 0 && selectedRepositories.size === 0 &&

@@ -68,6 +68,55 @@
       align-items: center;
       gap: 0.5rem;
 
+      .select-btn {
+        background: white;
+        color: #6264a7;
+        border: 2px solid #6264a7;
+        padding: calc(0.35rem - 2px) 0.75rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        min-width: 40px;
+
+        &:hover:not(:disabled) {
+          background: #f8f9fa;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(98, 100, 167, 0.3);
+        }
+
+        &:active:not(:disabled) {
+          transform: translateY(0);
+        }
+
+        &.selected {
+          background: #6264a7;
+          color: white;
+
+          &:hover {
+            background: #5558a0;
+          }
+        }
+
+        &:disabled {
+          cursor: not-allowed;
+          opacity: 0.4;
+          background: #f3f2f1;
+          color: #8a8886;
+          border-color: #8a8886;
+
+          &:hover {
+            transform: none;
+            box-shadow: none;
+          }
+        }
+      }
+
       .teams-btn {
         background: #6264a7;
         color: white;

@@ -67,6 +67,9 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
   // Pinned authors
   pinnedAuthors: Set<string> = new Set();
 
+  // Multi-PR selection
+  selectedPRs: PullRequest[] = [];
+
   private subscriptions = new Subscription();
 
   constructor(
@@ -92,6 +95,13 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.pinnedAuthorsService.pinnedAuthors$.subscribe((pinnedAuthors) => {
         this.pinnedAuthors = pinnedAuthors;
+      })
+    );
+
+    // Subscribe to selected PRs changes
+    this.subscriptions.add(
+      this.azureDevOpsService.selectedPRs$.subscribe((selectedPRs) => {
+        this.selectedPRs = selectedPRs;
       })
     );
 
@@ -390,6 +400,10 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     // will emit the changes and our subscription will handle it
   }
 
+  clearSelectedPRs(): void {
+    this.azureDevOpsService.clearSelectedPRs();
+  }
+
   openPullRequest(pullRequest: PullRequest) {
     const project = pullRequest.projectName;
     const repo = pullRequest.repository.name;
@@ -426,25 +440,66 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
   }
 
   openTeamsForPR(pr: PullRequest): void {
-    // Create the PR URL using Azure DevOps config
-    const prUrl = `${AZURE_DEVOPS_CONFIG.baseUrl}/${
-      AZURE_DEVOPS_CONFIG.organization
-    }/${encodeURIComponent(
-      pr.projectName || "{{PROJECT}}"
-    )}/_git/${encodeURIComponent(pr.repository.name)}/pullrequest/${
-      pr.pullRequestId
-    }`;
+    this.openTeamsForPRs([pr]);
+  }
 
-    // Create the PR message content
-    const message = `🆕 ${pr.title}
+  openTeamsForMultiplePRs(): void {
+    if (this.selectedPRs.length > 0) {
+      this.openTeamsForPRs(this.selectedPRs);
+      // Clear selection after posting
+      this.azureDevOpsService.clearSelectedPRs();
+    }
+  }
+
+  private openTeamsForPRs(prs: PullRequest[]): void {
+    let message: string;
+
+    if (prs.length === 1) {
+      const pr = prs[0];
+      // Create the PR URL using Azure DevOps config
+      const prUrl = `${AZURE_DEVOPS_CONFIG.baseUrl}/${
+        AZURE_DEVOPS_CONFIG.organization
+      }/${encodeURIComponent(
+        pr.projectName || "{{PROJECT}}"
+      )}/_git/${encodeURIComponent(pr.repository.name)}/pullrequest/${
+        pr.pullRequestId
+      }`;
+
+      // Create the PR message content
+      message = `🆕 ${pr.title}
 📁 ${pr.repository.name}
 🔀 ${this.getBranchName(pr.sourceRefName)} → ${this.getBranchName(
-      pr.targetRefName
-    )}
+        pr.targetRefName
+      )}
 
 🔗 ${prUrl}
 
 Please review! 🙏`;
+    } else {
+      // Multi-PR message
+      message = `🗂️🗂️ Multiple PRs for Review (${prs.length} PRs)
+
+`;
+
+      prs.forEach((pr, index) => {
+        const prUrl = `${AZURE_DEVOPS_CONFIG.baseUrl}/${
+          AZURE_DEVOPS_CONFIG.organization
+        }/${encodeURIComponent(
+          pr.projectName || "{{PROJECT}}"
+        )}/_git/${encodeURIComponent(pr.repository.name)}/pullrequest/${
+          pr.pullRequestId
+        }`;
+
+        const emojiNumber = index === 0 ? "1️⃣" : "2️⃣";
+        message += `${emojiNumber} ${pr.title}
+📁 ${pr.repository.name}
+🔗 ${prUrl}
+
+`;
+      });
+
+      message += `Please review! 🙏`;
+    }
 
     // Copy message to clipboard with fallback
     this.copyToClipboard(message);

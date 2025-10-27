@@ -14,6 +14,21 @@
     </h3>
     <div class="pr-actions">
       <button
+        class="select-btn"
+        [class.selected]="isSelected()"
+        [disabled]="isSelectionDisabled()"
+        (click)="onCheckboxChange($event)"
+        [title]="
+          isSelectionDisabled()
+            ? 'Maximum 2 PRs can be selected'
+            : isSelected()
+            ? 'Deselect PR from multi-post'
+            : 'Select PR for multi-post'
+        "
+      >
+        {{ isSelected() ? "✓" : "+" }}
+      </button>
+      <button
         class="teams-btn"
         (click)="onTeamsClick($event)"
         title="Copy PR message to clipboard and open Teams channel"
