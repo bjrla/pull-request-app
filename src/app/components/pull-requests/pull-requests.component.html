@@ -16,12 +16,14 @@
     [showDrafts]="showDrafts"
     [draftCount]="getDraftCount()"
     [regularCount]="getRegularCount()"
+    [pinnedAuthors]="pinnedAuthors"
     (refreshRequested)="loadPullRequests()"
     (repositoryFilterChanged)="onRepositorySelectionChanged($event)"
     (authorFilterChanged)="onAuthorSelectionChanged($event)"
     (filterCleared)="clearFilter()"
     (myPullRequestsRequested)="openMyPullRequests($event)"
     (draftsToggled)="toggleDraftVisibility()"
+    (authorPinToggled)="onAuthorPinToggled($event)"
   ></app-pull-request-summary>
 
   @if (filteredPullRequests.length === 0 && selectedRepositories.size === 0 &&

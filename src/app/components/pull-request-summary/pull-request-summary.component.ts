@@ -5,6 +5,7 @@ import {
   PullRequestSuggestion,
 } from "../../azure-devops/azure-devops.service";
 import { RepositoryColorService } from "../../services/repository-color.service";
+import { PinnedAuthorsService } from "../../services/pinned-authors.service";
 
 export interface ProjectSummary {
   project: string;
@@ -31,6 +32,7 @@ export class PullRequestSummaryComponent {
   @Input() showDrafts = false;
   @Input() draftCount = 0;
   @Input() regularCount = 0;
+  @Input() pinnedAuthors: Set<string> = new Set();
 
   @Output() refreshRequested = new EventEmitter<void>();
   @Output() repositoryFilterChanged = new EventEmitter<string>();
@@ -39,8 +41,12 @@ export class PullRequestSummaryComponent {
   @Output() myPullRequestsRequested = new EventEmitter<string>();
   @Output() createPRRequested = new EventEmitter<string>();
   @Output() draftsToggled = new EventEmitter<void>();
+  @Output() authorPinToggled = new EventEmitter<string>();
 
-  constructor(private repositoryColorService: RepositoryColorService) {}
+  constructor(
+    private repositoryColorService: RepositoryColorService,
+    private pinnedAuthorsService: PinnedAuthorsService
+  ) {}
 
   getRepositoryColor(projectName: string): string {
     return this.repositoryColorService.getRepositoryColor(projectName);
@@ -209,5 +215,15 @@ export class PullRequestSummaryComponent {
 
   onToggleDrafts() {
     this.draftsToggled.emit();
+  }
+
+  onToggleAuthorPin(author: string, event: Event) {
+    event.stopPropagation();
+    this.pinnedAuthorsService.togglePin(author);
+    this.authorPinToggled.emit(author);
+  }
+
+  isAuthorPinned(author: string): boolean {
+    return this.pinnedAuthors.has(author);
   }
 }

@@ -303,6 +303,18 @@
           box-shadow: 0 1px 4px rgba(0, 120, 212, 0.2);
         }
 
+        &.pinned {
+          border-color: #0078d4;
+          background: #f0f6ff;
+          box-shadow: 0 1px 4px rgba(0, 120, 212, 0.2);
+
+          &.selected {
+            border-color: #0078d4;
+            background: #e6f3ff;
+            box-shadow: 0 1px 4px rgba(0, 120, 212, 0.3);
+          }
+        }
+
         .author-avatar {
           width: 24px;
           height: 24px;
@@ -327,16 +339,55 @@
           font-weight: 600;
           background: #f3f2f1;
           border-radius: 10px;
-          padding: 0.1rem 0.3rem;
+          padding: 0.15rem 0.35rem;
           font-size: 0.7rem;
-          min-width: 16px;
+          min-width: 18px;
+          height: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           text-align: center;
           flex-shrink: 0;
+          line-height: 1;
         }
 
         &.selected .pr-count {
           background: #deecf9;
           color: #0078d4;
+        }
+
+        .pin-btn {
+          background: none;
+          border: none;
+          padding: 2px;
+          cursor: pointer;
+          color: #8a8886;
+          border-radius: 3px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          margin-left: auto;
+          flex-shrink: 0;
+
+          &:hover {
+            background: #f3f2f1;
+            color: #605e5c;
+          }
+
+          &.pinned {
+            color: #0078d4;
+
+            &:hover {
+              background: #f0f6ff;
+              color: #106ebe;
+            }
+          }
+
+          svg {
+            width: 14px;
+            height: 14px;
+          }
         }
       }
     }

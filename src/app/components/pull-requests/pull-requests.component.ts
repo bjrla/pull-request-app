@@ -23,6 +23,7 @@ import { ManageProjectsModalComponent } from "../add-project-modal/add-project-m
 import { PATPromptModalComponent } from "../pat-prompt-modal/pat-prompt-modal.component";
 import { ConfigStorageService } from "../../services/config-storage.service";
 import { RepositoryColorService } from "../../services/repository-color.service";
+import { PinnedAuthorsService } from "../../services/pinned-authors.service";
 
 @Component({
   selector: "app-pull-requests",
@@ -63,12 +64,16 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
   currentProjects: ProjectConfig[] = [];
   patPromptMessage: string = "";
 
+  // Pinned authors
+  pinnedAuthors: Set<string> = new Set();
+
   private subscriptions = new Subscription();
 
   constructor(
     private azureDevOpsService: AzureDevOpsService,
     private configService: ConfigStorageService,
-    private repositoryColorService: RepositoryColorService
+    private repositoryColorService: RepositoryColorService,
+    private pinnedAuthorsService: PinnedAuthorsService
   ) {}
 
   ngOnInit() {
@@ -80,6 +85,13 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
         if (this.currentProjects.length > 0) {
           this.loadPullRequests();
         }
+      })
+    );
+
+    // Subscribe to pinned authors changes
+    this.subscriptions.add(
+      this.pinnedAuthorsService.pinnedAuthors$.subscribe((pinnedAuthors) => {
+        this.pinnedAuthors = pinnedAuthors;
       })
     );
 
@@ -146,6 +158,10 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     this.azureDevOpsService.getActivePullRequests(visibleProjects).subscribe({
       next: (response) => {
         this.pullRequests = response.value || [];
+
+        // Check for pinned authors and auto-apply filters
+        this.applyAutomaticPinnedAuthorFilters();
+
         this.applyFilters();
         this.isLoading = false;
 
@@ -198,6 +214,26 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
 
   getRepositoryColor(repositoryName: string): string {
     return this.repositoryColorService.getRepositoryColor(repositoryName);
+  }
+
+  private applyAutomaticPinnedAuthorFilters(): void {
+    // Get all unique authors from current PRs
+    const currentAuthors = this.getUniqueAuthors();
+
+    // Find pinned authors that have PRs in the current result
+    const activePinnedAuthors = currentAuthors.filter((author) =>
+      this.pinnedAuthors.has(author)
+    );
+
+    // Only apply automatic filtering if:
+    // 1. There are pinned authors with active PRs
+    // 2. No authors are currently selected (to avoid overriding user selections)
+    if (activePinnedAuthors.length > 0 && this.selectedAuthors.size === 0) {
+      // Automatically apply the filter for pinned authors
+      activePinnedAuthors.forEach((author) => {
+        this.selectedAuthors.add(author);
+      });
+    }
   }
 
   applyFilters(): void {
@@ -345,6 +381,13 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
 
   onProjectsReordered(projects: ProjectConfig[]) {
     this.onProjectsUpdated(projects);
+  }
+
+  onAuthorPinToggled(author: string) {
+    // This method is called when a user pins/unpins an author
+    // The PinnedAuthorsService handles the actual logic
+    // We don't need to do anything specific here as the service
+    // will emit the changes and our subscription will handle it
   }
 
   openPullRequest(pullRequest: PullRequest) {

@@ -76,6 +76,7 @@
       <div
         class="author-filter-item"
         [class.selected]="isAuthorSelected(author)"
+        [class.pinned]="isAuthorPinned(author)"
         (click)="onFilterByAuthor(author)"
         [title]="
           author +
@@ -83,7 +84,8 @@
           getPRCountForAuthor(author) +
           ' PR' +
           (getPRCountForAuthor(author) !== 1 ? 's' : '') +
-          ')'
+          ')' +
+          (isAuthorPinned(author) ? ' - Pinned' : '')
         "
       >
         <img
@@ -95,6 +97,26 @@
         />
         <span class="author-name">{{ author }}</span>
         <span class="pr-count">{{ getPRCountForAuthor(author) }}</span>
+        <button
+          class="pin-btn"
+          [class.pinned]="isAuthorPinned(author)"
+          (click)="onToggleAuthorPin(author, $event)"
+          [title]="isAuthorPinned(author) ? 'Unpin author' : 'Pin author'"
+        >
+          @if (isAuthorPinned(author)) {
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path
+              d="M9.828.722a.5.5 0 0 1 .354.146l4.95 4.95a.5.5 0 0 1 0 .707c-.48.48-1.072.588-1.503.588-.177 0-.335-.018-.46-.039l-3.134 3.134a5.927 5.927 0 0 1 .16 1.013c.046.702-.512 1.234-.857 1.234-.5 0-.686-.982-.59-1.234a4.73 4.73 0 0 0-.205-1.183L2.4 15.2l-.707-.707 5.243-5.243c-.32-.077-.643-.158-.955-.205C5.274 8.901 4.292 8.715 4.292 8.215c0-.345.532-.903 1.234-.857.37.02.699.06 1.013.16l3.134-3.134c-.021-.125-.039-.283-.039-.46 0-.431.108-1.022.588-1.503a.5.5 0 0 1 .353-.146zm.122 2.112L6.878 6.878a4.73 4.73 0 0 1 1.414 1.414l4.043-4.043a1.5 1.5 0 0 0-.385-.415z"
+            />
+          </svg>
+          } @else {
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path
+              d="M4.146.146A.5.5 0 0 1 4.5 0h7a.5.5 0 0 1 .5.5c0 .68-.342 1.174-.646 1.479-.126.125-.25.224-.354.298v4.431l.078.048c.203.127.476.314.751.555C12.36 7.775 13 8.527 13 9.5a.5.5 0 0 1-.5.5h-4v4.5c0 .276-.224 1.5-.5 1.5s-.5-1.224-.5-1.5V10h-4a.5.5 0 0 1-.5-.5c0-.973.64-1.725 1.17-2.189A5.921 5.921 0 0 1 5 6.708V2.277a2.77 2.77 0 0 1-.354-.298C4.342 1.674 4 1.179 4 .5a.5.5 0 0 1 .146-.354z"
+            />
+          </svg>
+          }
+        </button>
       </div>
       }
     </div>
