@@ -146,13 +146,20 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
   }
 
   private handleVisibilityChange = () => {
-    // When the page becomes visible again, refresh the PRs
+    // When the page becomes visible again, refresh the PRs with a small delay
+    // to allow the browser to fully restore network connections
     if (
       !document.hidden &&
       this.currentProjects.length > 0 &&
       !this.isLoading
     ) {
-      this.loadPullRequests();
+      // Add a small delay to allow network connections to stabilize
+      setTimeout(() => {
+        // Check again if we're still visible and not loading
+        if (!document.hidden && !this.isLoading) {
+          this.loadPullRequests();
+        }
+      }, 500);
     }
   };
 
