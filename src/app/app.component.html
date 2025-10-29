@@ -26,15 +26,31 @@
         </svg>
       </button>
 
-      <!-- Input field below Easy Logon button -->
-      <input
-        type="text"
-        class="easy-logon-input"
-        maxlength="6"
-        [disabled]="isLogonRunning"
-        [(ngModel)]="userId"
-        placeholder="4A1137"
-      />
+      <!-- Input field and clipboard toggle -->
+      <div class="easy-logon-controls">
+        <input
+          type="text"
+          class="easy-logon-input"
+          maxlength="6"
+          [disabled]="isLogonRunning"
+          [(ngModel)]="userId"
+          placeholder="4A1137"
+        />
+        <label class="clipboard-toggle" title="Copy token to clipboard">
+          <input
+            type="checkbox"
+            [disabled]="isLogonRunning"
+            [(ngModel)]="copyToClipboard"
+          />
+          <span class="toggle-slider"></span>
+          <svg viewBox="0 0 24 24" class="clipboard-icon">
+            <path
+              d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"
+              fill="currentColor"
+            />
+          </svg>
+        </label>
+      </div>
     </div>
 
     <div class="header-content">

@@ -401,10 +401,17 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
   }
 
   onAuthorPinToggled(author: string) {
-    // This method is called when a user pins/unpins an author
-    // The PinnedAuthorsService handles the actual logic
-    // We don't need to do anything specific here as the service
-    // will emit the changes and our subscription will handle it
+    // Check if the author is now pinned (after the toggle)
+    const isNowPinned = this.pinnedAuthorsService.isPinned(author);
+
+    if (isNowPinned) {
+      // If the author was just pinned, also select them as a filter
+      if (!this.selectedAuthors.has(author)) {
+        this.selectedAuthors.add(author);
+        this.applyFilters();
+      }
+    }
+    // Note: We don't remove the filter when unpinning to allow manual control
   }
 
   clearSelectedPRs(): void {

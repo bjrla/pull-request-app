@@ -5,6 +5,7 @@ import { Observable, BehaviorSubject, Subject } from "rxjs";
 export interface EasyLogonRequest {
   userId?: string;
   password?: string;
+  copyToClipboard?: boolean;
 }
 
 export interface EasyLogonResponse {
@@ -47,6 +48,7 @@ export class EasyLogonService {
   ): Observable<EasyLogonStreamMessage> {
     const userId = credentials?.userId || "4A1137";
     const password = credentials?.password || "454545";
+    const copyToClipboard = credentials?.copyToClipboard !== false; // Default to true
 
     this.updateStatus({
       isRunning: true,
@@ -56,7 +58,11 @@ export class EasyLogonService {
     return new Observable((observer) => {
       const url = `${this.apiUrl}/easy-logon/stream?userId=${encodeURIComponent(
         userId
-      )}&password=${encodeURIComponent(password)}`;
+      )}&password=${encodeURIComponent(
+        password
+      )}&copyToClipboard=${copyToClipboard}`;
+      console.log("🔐 copyToClipboard:", copyToClipboard);
+
       const eventSource = new EventSource(url);
 
       eventSource.onmessage = (event) => {

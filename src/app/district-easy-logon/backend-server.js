@@ -13,10 +13,10 @@ app.use(cors());
 app.use(express.json());
 
 app.post("/api/easy-logon", (req, res) => {
-  const { userId, password } = req.body;
+  const { userId, password, copyToClipboard } = req.body;
 
   const scriptPath = path.join(__dirname, "app.mjs");
-  const args = [scriptPath, userId, password];
+  const args = [scriptPath, userId, password, copyToClipboard];
 
   console.log("Starting District Easy Logon...");
 
@@ -89,7 +89,7 @@ app.post("/api/easy-logon", (req, res) => {
 });
 
 app.get("/api/easy-logon/stream", (req, res) => {
-  const { userId, password } = req.query;
+  const { userId, password, copyToClipboard } = req.query;
 
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -100,7 +100,7 @@ app.get("/api/easy-logon/stream", (req, res) => {
   });
 
   const scriptPath = path.join(__dirname, "app.mjs");
-  const args = [scriptPath, userId, password];
+  const args = [scriptPath, userId, password, copyToClipboard];
 
   res.write(
     `data: ${JSON.stringify({

@@ -34,6 +34,7 @@ export class AppComponent implements OnInit, OnDestroy {
   logonMessageType: "info" | "stdout" | "stderr" | "success" | "error" | "end" =
     "info";
   private _userId: string = "4A1137";
+  private _copyToClipboard: boolean = true;
 
   get userId(): string {
     return this._userId;
@@ -42,6 +43,15 @@ export class AppComponent implements OnInit, OnDestroy {
   set userId(value: string) {
     this._userId = value;
     localStorage.setItem("easyLogonUserId", value);
+  }
+
+  get copyToClipboard(): boolean {
+    return this._copyToClipboard;
+  }
+
+  set copyToClipboard(value: boolean) {
+    this._copyToClipboard = value;
+    localStorage.setItem("easyLogonCopyToClipboard", JSON.stringify(value));
   }
 
   private subscriptions = new Subscription();
@@ -87,6 +97,14 @@ export class AppComponent implements OnInit, OnDestroy {
     const storedUserId = localStorage.getItem("easyLogonUserId");
     if (storedUserId) {
       this._userId = storedUserId;
+    }
+
+    // Load copyToClipboard setting from localStorage
+    const storedCopyToClipboard = localStorage.getItem(
+      "easyLogonCopyToClipboard"
+    );
+    if (storedCopyToClipboard !== null) {
+      this._copyToClipboard = JSON.parse(storedCopyToClipboard);
     }
   }
 
@@ -167,7 +185,10 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     this.easyLogonSubscription = this.easyLogonService
-      .startEasyLogonWithStream({ userId: this.userId })
+      .startEasyLogonWithStream({
+        userId: this.userId,
+        copyToClipboard: this.copyToClipboard,
+      })
       .subscribe({
         next: (message) => {
           // Update the UI with the latest message (cleaned of ANSI codes and with timestamp)
