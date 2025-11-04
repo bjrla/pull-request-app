@@ -12,10 +12,12 @@ import { AzureDevOpsService } from "../azure-devops/azure-devops.service";
 export class ConfigStorageService {
   private readonly PROJECTS_STORAGE_KEY = "azure-devops-projects";
   private readonly PAT_STORAGE_KEY = "azure-devops-pat";
+  private readonly BETA_FEATURES_STORAGE_KEY = "beta-features-enabled";
 
-  // Reactive streams for projects and PAT
+  // Reactive streams for projects, PAT and beta features
   private _projects$ = new BehaviorSubject<ProjectConfig[]>([]);
   private _pat$ = new BehaviorSubject<string>("");
+  private _betaFeaturesEnabled$ = new BehaviorSubject<boolean>(false);
 
   // Inject AzureDevOpsService to automatically update PAT
   private azureDevOpsService = inject(AzureDevOpsService);
@@ -40,6 +42,10 @@ export class ConfigStorageService {
     return this._pat$.asObservable();
   }
 
+  get betaFeaturesEnabled$(): Observable<boolean> {
+    return this._betaFeaturesEnabled$.asObservable();
+  }
+
   // Getters for current values
   get currentProjects(): ProjectConfig[] {
     return this._projects$.value;
@@ -49,10 +55,15 @@ export class ConfigStorageService {
     return this._pat$.value;
   }
 
+  get currentBetaFeaturesEnabled(): boolean {
+    return this._betaFeaturesEnabled$.value;
+  }
+
   // Initialize from localStorage
   private initializeFromStorage(): void {
     this.loadProjectsFromStorage();
     this.loadPATFromStorage();
+    this.loadBetaFeaturesFromStorage();
   }
 
   private loadProjectsFromStorage(): void {
@@ -90,6 +101,24 @@ export class ConfigStorageService {
     }
   }
 
+  private loadBetaFeaturesFromStorage(): void {
+    try {
+      const stored = localStorage.getItem(this.BETA_FEATURES_STORAGE_KEY);
+      if (stored !== null) {
+        this._betaFeaturesEnabled$.next(JSON.parse(stored));
+      } else {
+        // Default to false for beta features
+        this._betaFeaturesEnabled$.next(false);
+      }
+    } catch (error) {
+      console.error(
+        "ConfigStorageService: Error loading beta features from storage:",
+        error
+      );
+      this._betaFeaturesEnabled$.next(false);
+    }
+  }
+
   // Update methods
   updateProjects(projects: ProjectConfig[]): void {
     try {
@@ -110,6 +139,21 @@ export class ConfigStorageService {
     } catch (error) {
       console.error(
         "ConfigStorageService: Error saving PAT to storage:",
+        error
+      );
+    }
+  }
+
+  updateBetaFeaturesEnabled(enabled: boolean): void {
+    try {
+      localStorage.setItem(
+        this.BETA_FEATURES_STORAGE_KEY,
+        JSON.stringify(enabled)
+      );
+      this._betaFeaturesEnabled$.next(enabled);
+    } catch (error) {
+      console.error(
+        "ConfigStorageService: Error saving beta features to storage:",
         error
       );
     }

@@ -467,3 +467,92 @@
     background: #a19f9d;
   }
 }
+
+// Beta Features Section
+.beta-features-section {
+  border-top: 1px solid #e1e5e9;
+  padding-top: 1rem;
+  margin-top: 1rem;
+
+  h3 {
+    margin: 0 0 1rem 0;
+    color: #323130;
+    font-size: 1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &::after {
+      content: "BETA";
+      font-size: 0.65rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+      padding: 0.2em 0.5em;
+      border-radius: 3px;
+      letter-spacing: 0.05em;
+    }
+  }
+}
+
+.beta-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+
+  .beta-checkbox {
+    display: none;
+  }
+
+  .beta-toggle-slider {
+    width: 48px;
+    height: 24px;
+    background: #d2d0ce;
+    border-radius: 12px;
+    position: relative;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    display: block;
+
+    &::after {
+      content: "";
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      top: 2px;
+      left: 2px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  .beta-checkbox:checked ~ .beta-toggle-slider {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+
+    &::after {
+      left: 26px;
+    }
+  }
+
+  .beta-toggle-label {
+    font-weight: 500;
+    color: #323130;
+    user-select: none;
+    line-height: 24px;
+    flex: 1;
+  }
+
+  &:hover .beta-toggle-slider {
+    background: #c8c6c4;
+  }
+
+  &:hover .beta-checkbox:checked + .beta-toggle-slider {
+    background: linear-gradient(135deg, #e08e09 0%, #c76e05 100%);
+  }
+}

@@ -27,6 +27,7 @@ export class AppComponent implements OnInit, OnDestroy {
   isManageProjectsModalOpen = false;
   currentProjects: ProjectConfig[] = [];
   currentPAT: string = "";
+  betaFeaturesEnabled: boolean = false;
 
   // Easy Logon state
   isLogonRunning = false;
@@ -73,6 +74,12 @@ export class AppComponent implements OnInit, OnDestroy {
     this.subscriptions.add(
       this.configStorageService.pat$.subscribe((pat) => {
         this.currentPAT = pat;
+      })
+    );
+
+    this.subscriptions.add(
+      this.configStorageService.betaFeaturesEnabled$.subscribe((enabled) => {
+        this.betaFeaturesEnabled = enabled;
       })
     );
 

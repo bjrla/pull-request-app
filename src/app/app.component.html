@@ -68,8 +68,16 @@
           </svg>
         </div>
         <div class="title-section">
-          <h1 class="app-title">CPO Frontend Dashboard</h1>
-          <span class="app-subtitle">Pull Request Management System</span>
+          <h1 class="app-title">
+            <span class="title-main">BJORNS</span>
+            <span class="title-super">SUPERTOOL</span>
+            <span class="title-version">Pro</span>
+          </h1>
+          <span class="app-subtitle">
+            <span class="subtitle-icon">⚡</span>
+            Advanced Development & Management Platform
+            <span class="subtitle-icon">⚡</span>
+          </span>
         </div>
       </div>
       <div class="header-right">
@@ -91,6 +99,7 @@
             </svg>
             Pull Requests
           </button>
+          @if (betaFeaturesEnabled) {
           <button
             [class.active]="isActiveRoute('pipelines')"
             (click)="navigateTo('pipelines')"
@@ -119,6 +128,7 @@
             <span class="nav-text">Feedback</span>
             <span class="beta-label">BETA</span>
           </button>
+          }
           <button
             (click)="openManageProjectsModal()"
             class="nav-button secondary"
@@ -129,7 +139,7 @@
                 fill="currentColor"
               ></path>
             </svg>
-            Manage Projects
+            Settings
           </button>
         </nav>
       </div>

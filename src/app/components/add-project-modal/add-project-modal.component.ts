@@ -29,6 +29,7 @@ export class ManageProjectsModalComponent implements OnInit, OnChanges {
 
   projectName = "";
   currentPAT = "";
+  betaFeaturesEnabled = false;
 
   constructor(private configService: ConfigStorageService) {}
 
@@ -109,13 +110,15 @@ export class ManageProjectsModalComponent implements OnInit, OnChanges {
     // Get current PAT value from service when component initializes
     this.currentPAT = this.configService.currentPAT;
     this.personalAccessToken = this.currentPAT;
+    this.betaFeaturesEnabled = this.configService.currentBetaFeaturesEnabled;
   }
 
   ngOnChanges() {
-    // Update PAT when modal opens
+    // Update PAT and beta features when modal opens
     if (this.isOpen) {
       this.currentPAT = this.configService.currentPAT;
       this.personalAccessToken = this.currentPAT;
+      this.betaFeaturesEnabled = this.configService.currentBetaFeaturesEnabled;
     }
   }
 
@@ -130,12 +133,19 @@ export class ManageProjectsModalComponent implements OnInit, OnChanges {
     }
   }
 
+  onToggleBetaFeatures() {
+    this.betaFeaturesEnabled = !this.betaFeaturesEnabled;
+    this.configService.updateBetaFeaturesEnabled(this.betaFeaturesEnabled);
+  }
+
   private resetForm() {
     this.projectName = "";
     this.repositoryName = "";
     this.repositoryUrl = "";
     // Reset PAT to current value when canceling
     this.personalAccessToken = this.currentPAT;
+    // Reset beta features to current value when canceling
+    this.betaFeaturesEnabled = this.configService.currentBetaFeaturesEnabled;
   }
 
   // Drag and drop methods
