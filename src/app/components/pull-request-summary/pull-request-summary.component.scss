@@ -303,16 +303,16 @@
           box-shadow: 0 1px 4px rgba(0, 120, 212, 0.2);
         }
 
-        &.pinned {
-          border-color: #0078d4;
-          background: #f0f6ff;
-          box-shadow: 0 1px 4px rgba(0, 120, 212, 0.2);
+        &.pinned:not(.selected) {
+          border-color: #e1e5e9;
+          background: #f8f9fa;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
 
-          &.selected {
-            border-color: #0078d4;
-            background: #e6f3ff;
-            box-shadow: 0 1px 4px rgba(0, 120, 212, 0.3);
-          }
+        &.pinned.selected {
+          border-color: #0078d4;
+          background: #e6f3ff;
+          box-shadow: 0 1px 4px rgba(0, 120, 212, 0.3);
         }
 
         .author-avatar {
