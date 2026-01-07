@@ -430,7 +430,10 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     const repo = pullRequest.repository.name;
     const prId = pullRequest.pullRequestId;
 
-    const url = `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${project}/_git/${repo}/pullrequest/${prId}`;
+    // Decode first to handle already-encoded values, then encode to ensure proper encoding
+    const decodedProject = decodeURIComponent(project || "");
+    const decodedRepo = decodeURIComponent(repo);
+    const url = `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${encodeURIComponent(decodedProject)}/_git/${encodeURIComponent(decodedRepo)}/pullrequest/${prId}`;
     window.open(url, "_blank");
   }
 
@@ -456,7 +459,10 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
       }
     }
 
-    const url = `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${projectName}/_git/${repositoryName}/pullrequests?_a=mine`;
+    // Decode first to handle already-encoded values, then encode to ensure proper encoding
+    const decodedProjectName = decodeURIComponent(projectName);
+    const decodedRepositoryName = decodeURIComponent(repositoryName);
+    const url = `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${encodeURIComponent(decodedProjectName)}/_git/${encodeURIComponent(decodedRepositoryName)}/pullrequests?_a=mine`;
     window.open(url, "_blank");
   }
 
@@ -478,11 +484,15 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     if (prs.length === 1) {
       const pr = prs[0];
       // Create the PR URL using Azure DevOps config
+      // Decode first to handle already-encoded values, then encode to ensure proper encoding
+      const projectName = pr.projectName || "{{PROJECT}}";
+      const decodedProjectName = decodeURIComponent(projectName);
+      const repositoryName = pr.repository.name;
+      const decodedRepositoryName = decodeURIComponent(repositoryName);
+      
       const prUrl = `${AZURE_DEVOPS_CONFIG.baseUrl}/${
         AZURE_DEVOPS_CONFIG.organization
-      }/${encodeURIComponent(
-        pr.projectName || "{{PROJECT}}"
-      )}/_git/${encodeURIComponent(pr.repository.name)}/pullrequest/${
+      }/${encodeURIComponent(decodedProjectName)}/_git/${encodeURIComponent(decodedRepositoryName)}/pullrequest/${
         pr.pullRequestId
       }`;
 
@@ -503,11 +513,15 @@ Please review! 🙏`;
 `;
 
       prs.forEach((pr, index) => {
+        // Decode first to handle already-encoded values, then encode to ensure proper encoding
+        const projectName = pr.projectName || "{{PROJECT}}";
+        const decodedProjectName = decodeURIComponent(projectName);
+        const repositoryName = pr.repository.name;
+        const decodedRepositoryName = decodeURIComponent(repositoryName);
+        
         const prUrl = `${AZURE_DEVOPS_CONFIG.baseUrl}/${
           AZURE_DEVOPS_CONFIG.organization
-        }/${encodeURIComponent(
-          pr.projectName || "{{PROJECT}}"
-        )}/_git/${encodeURIComponent(pr.repository.name)}/pullrequest/${
+        }/${encodeURIComponent(decodedProjectName)}/_git/${encodeURIComponent(decodedRepositoryName)}/pullrequest/${
           pr.pullRequestId
         }`;
 
