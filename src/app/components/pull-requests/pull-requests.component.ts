@@ -234,11 +234,18 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
   }
 
   private applyAutomaticPinnedAuthorFilters(): void {
-    // Get all unique authors from current PRs
-    const currentAuthors = this.getUniqueAuthors();
+    // Get all unique authors from current PRs (excluding drafts if showDrafts is false)
+    const prsToConsider = this.showDrafts
+      ? this.pullRequests
+      : this.pullRequests.filter((pr) => !pr.isDraft);
+
+    const currentAuthors = new Set<string>();
+    prsToConsider.forEach((pr) => {
+      currentAuthors.add(pr.createdBy.displayName);
+    });
 
     // Find pinned authors that have PRs in the current result
-    const activePinnedAuthors = currentAuthors.filter((author) =>
+    const activePinnedAuthors = Array.from(currentAuthors).filter((author) =>
       this.pinnedAuthors.has(author)
     );
 

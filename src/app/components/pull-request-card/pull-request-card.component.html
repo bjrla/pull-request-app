@@ -82,84 +82,282 @@
       </span>
     </div>
 
-    <div class="pr-status-section">
-      <div class="pr-status-items">
-        <span
-          class="pr-merge"
-          [ngClass]="getMergeStatus(pullRequest).class"
-          [title]="getMergeDetails(pullRequest)"
+    <div class="pr-roadmap-section">
+      <div class="roadmap-steps">
+        <div
+          class="roadmap-step"
+          [ngClass]="getRoadmapStepClass(pullRequest, 1)"
         >
-          <span class="status-indicator">
-            <span
-              class="status-dot merge-dot"
-              [ngClass]="getMergeStatus(pullRequest).class"
-            ></span>
-            <strong>Merge:</strong>
-          </span>
-          {{ getMergeStatus(pullRequest).label }}
-        </span>
-        <span
-          class="pr-comments"
-          [ngClass]="getCommentStatus(pullRequest).class"
-          [title]="getCommentDetails(pullRequest)"
-        >
-          <span class="status-indicator">
-            <span
-              class="status-dot comment-dot"
-              [ngClass]="getCommentStatus(pullRequest).class"
-            ></span>
-            <strong>Comments:</strong>
-          </span>
-          {{ getCommentStatus(pullRequest).label }}
-        </span>
-        <span class="pr-review" [ngClass]="getReviewStatus(pullRequest).class">
-          <span class="status-indicator">
-            <span
-              class="status-dot review-dot"
-              [ngClass]="getReviewStatus(pullRequest).class"
-            ></span>
-            <strong>Reviewers:</strong>
-          </span>
-          @if (hasReviewerDetails(pullRequest)) {
-          <div class="reviewer-avatars-inline">
-            @for (reviewerInfo of getAllReviewersWithStatus(pullRequest); track
-            reviewerInfo.reviewer.id) {
-            <div
-              class="reviewer-avatar-container"
-              [attr.data-status]="reviewerInfo.status"
-              [title]="
-                reviewerInfo.reviewer.displayName +
-                ' - ' +
-                (reviewerInfo.status === 'approved'
-                  ? 'Approved'
-                  : reviewerInfo.status === 'rejected'
-                  ? 'Rejected'
-                  : 'Waiting for review')
-              "
-            >
-              <img
-                class="reviewer-avatar"
-                [src]="getReviewerProfilePictureUrl(reviewerInfo.reviewer)"
-                [alt]="reviewerInfo.reviewer.displayName"
-                (error)="onImageError($event)"
-              />
-              <div
-                class="status-indicator"
-                [ngClass]="'status-' + reviewerInfo.status"
-              >
-                @if (reviewerInfo.status === 'approved') {
-                <span class="status-icon">✓</span>
-                } @else if (reviewerInfo.status === 'rejected') {
-                <span class="status-icon">✗</span>
-                } @else {
-                <span class="status-icon">⏱</span>
-                }
-              </div>
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">Merge Conflicts</div>
+            <div class="step-status">
+              {{ getMergeStatus(pullRequest).label }}
             </div>
+          </div>
+          <div class="step-indicator">
+            @if (getRoadmapStepClass(pullRequest, 1) === 'current') {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0,0,256,256"
+            >
+              <g
+                fill="currentColor"
+                fill-rule="nonzero"
+                stroke="none"
+                stroke-width="1"
+                stroke-linecap="butt"
+                stroke-linejoin="miter"
+                stroke-miterlimit="10"
+                stroke-dasharray=""
+                stroke-dashoffset="0"
+                font-family="none"
+                font-weight="none"
+                font-size="none"
+                text-anchor="none"
+                style="mix-blend-mode: normal"
+              >
+                <g transform="scale(8,8)">
+                  <path
+                    d="M16,4c-6.61719,0 -12,5.38281 -12,12c0,6.61719 5.38281,12 12,12c6.61719,0 12,-5.38281 12,-12c0,-6.61719 -5.38281,-12 -12,-12zM16,6c5.53516,0 10,4.46484 10,10c0,5.53516 -4.46484,10 -10,10c-5.53516,0 -10,-4.46484 -10,-10c0,-5.53516 4.46484,-10 10,-10zM15,8v9h7v-2h-5v-7z"
+                  ></path>
+                </g>
+              </g>
+            </svg>
+            } @else {
+            {{ getRoadmapStepIcon(pullRequest, 1) }}
             }
           </div>
-          }@else{ None }
-        </span>
+        </div>
+
+        <div
+          class="roadmap-connector"
+          [ngClass]="{ completed: isRoadmapStepComplete(pullRequest, 1) }"
+        ></div>
+
+        <div
+          class="roadmap-step"
+          [ngClass]="getRoadmapStepClass(pullRequest, 2)"
+        >
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Comments</div>
+            <div class="step-status">
+              {{ getCommentStatus(pullRequest).label }}
+            </div>
+          </div>
+          <div class="step-indicator">
+            @if (getRoadmapStepClass(pullRequest, 2) === 'current') {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0,0,256,256"
+            >
+              <g
+                fill="currentColor"
+                fill-rule="nonzero"
+                stroke="none"
+                stroke-width="1"
+                stroke-linecap="butt"
+                stroke-linejoin="miter"
+                stroke-miterlimit="10"
+                stroke-dasharray=""
+                stroke-dashoffset="0"
+                font-family="none"
+                font-weight="none"
+                font-size="none"
+                text-anchor="none"
+                style="mix-blend-mode: normal"
+              >
+                <g transform="scale(8,8)">
+                  <path
+                    d="M16,4c-6.61719,0 -12,5.38281 -12,12c0,6.61719 5.38281,12 12,12c6.61719,0 12,-5.38281 12,-12c0,-6.61719 -5.38281,-12 -12,-12zM16,6c5.53516,0 10,4.46484 10,10c0,5.53516 -4.46484,10 -10,10c-5.53516,0 -10,-4.46484 -10,-10c0,-5.53516 4.46484,-10 10,-10zM15,8v9h7v-2h-5v-7z"
+                  ></path>
+                </g>
+              </g>
+            </svg>
+            } @else {
+            {{ getRoadmapStepIcon(pullRequest, 2) }}
+            }
+          </div>
+        </div>
+
+        <div
+          class="roadmap-connector"
+          [ngClass]="{ completed: isRoadmapStepComplete(pullRequest, 2) }"
+        ></div>
+
+        <div
+          class="roadmap-step"
+          [ngClass]="getRoadmapStepClass(pullRequest, 3)"
+        >
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Reviewers</div>
+            <div class="step-status">
+              {{ getReviewerCountText(pullRequest) }}
+              @if (hasReviewerDetails(pullRequest)) {
+              <div class="reviewer-avatars-inline">
+                @for (reviewerInfo of getAllReviewersWithStatus(pullRequest);
+                track reviewerInfo.reviewer.id) {
+                <div
+                  class="reviewer-avatar-container"
+                  [attr.data-status]="reviewerInfo.status"
+                  [title]="
+                    reviewerInfo.reviewer.displayName +
+                    ' - ' +
+                    (reviewerInfo.status === 'approved'
+                      ? 'Approved'
+                      : reviewerInfo.status === 'rejected'
+                      ? 'Rejected'
+                      : 'Waiting for review')
+                  "
+                >
+                  <img
+                    class="reviewer-avatar"
+                    [src]="getReviewerProfilePictureUrl(reviewerInfo.reviewer)"
+                    [alt]="reviewerInfo.reviewer.displayName"
+                    (error)="onImageError($event)"
+                  />
+                  <div
+                    class="status-indicator"
+                    [ngClass]="'status-' + reviewerInfo.status"
+                  >
+                    @if (reviewerInfo.status === 'approved') {
+                    <span class="status-icon">✓</span>
+                    } @else if (reviewerInfo.status === 'rejected') {
+                    <span class="status-icon">✗</span>
+                    } @else {
+                    <svg
+                      class="status-icon"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="10"
+                      height="10"
+                      viewBox="0,0,256,256"
+                    >
+                      <g
+                        fill="#ffffff"
+                        fill-rule="nonzero"
+                        stroke="none"
+                        stroke-width="1"
+                        stroke-linecap="butt"
+                        stroke-linejoin="miter"
+                        stroke-miterlimit="10"
+                        stroke-dasharray=""
+                        stroke-dashoffset="0"
+                        font-family="none"
+                        font-weight="none"
+                        font-size="none"
+                        text-anchor="none"
+                        style="mix-blend-mode: normal"
+                      >
+                        <g transform="scale(10.66667,10.66667)">
+                          <path
+                            d="M12,2c-5.514,0 -10,4.486 -10,10c0,5.514 4.486,10 10,10c5.514,0 10,-4.486 10,-10c0,-5.514 -4.486,-10 -10,-10zM15.566,15.989l-4.887,-3.383l0.708,-6.73l2.486,0.262l-0.553,5.256l3.668,2.54z"
+                          ></path>
+                        </g>
+                      </g>
+                    </svg>
+                    }
+                  </div>
+                </div>
+                }
+              </div>
+              }
+            </div>
+          </div>
+          <div class="step-indicator">
+            @if (getRoadmapStepClass(pullRequest, 3) === 'current') {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0,0,256,256"
+            >
+              <g
+                fill="currentColor"
+                fill-rule="nonzero"
+                stroke="none"
+                stroke-width="1"
+                stroke-linecap="butt"
+                stroke-linejoin="miter"
+                stroke-miterlimit="10"
+                stroke-dasharray=""
+                stroke-dashoffset="0"
+                font-family="none"
+                font-weight="none"
+                font-size="none"
+                text-anchor="none"
+                style="mix-blend-mode: normal"
+              >
+                <g transform="scale(8,8)">
+                  <path
+                    d="M16,4c-6.61719,0 -12,5.38281 -12,12c0,6.61719 5.38281,12 12,12c6.61719,0 12,-5.38281 12,-12c0,-6.61719 -5.38281,-12 -12,-12zM16,6c5.53516,0 10,4.46484 10,10c0,5.53516 -4.46484,10 -10,10c-5.53516,0 -10,-4.46484 -10,-10c0,-5.53516 4.46484,-10 10,-10zM15,8v9h7v-2h-5v-7z"
+                  ></path>
+                </g>
+              </g>
+            </svg>
+            } @else {
+            {{ getRoadmapStepIcon(pullRequest, 3) }}
+            }
+          </div>
+        </div>
+
+        <div
+          class="roadmap-connector"
+          [ngClass]="{ completed: isRoadmapStepComplete(pullRequest, 3) }"
+        ></div>
+
+        <div
+          class="roadmap-step"
+          [ngClass]="getRoadmapStepClass(pullRequest, 4)"
+        >
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <div class="step-title">Ready to merge</div>
+            <div class="step-status">
+              {{ pullRequest.status === "completed" ? "Completed" : "Pending" }}
+            </div>
+          </div>
+          <div class="step-indicator">
+            @if (getRoadmapStepClass(pullRequest, 4) === 'current') {
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0,0,256,256"
+            >
+              <g
+                fill="currentColor"
+                fill-rule="nonzero"
+                stroke="none"
+                stroke-width="1"
+                stroke-linecap="butt"
+                stroke-linejoin="miter"
+                stroke-miterlimit="10"
+                stroke-dasharray=""
+                stroke-dashoffset="0"
+                font-family="none"
+                font-weight="none"
+                font-size="none"
+                text-anchor="none"
+                style="mix-blend-mode: normal"
+              >
+                <g transform="scale(8,8)">
+                  <path
+                    d="M16,4c-6.61719,0 -12,5.38281 -12,12c0,6.61719 5.38281,12 12,12c6.61719,0 12,-5.38281 12,-12c0,-6.61719 -5.38281,-12 -12,-12zM16,6c5.53516,0 10,4.46484 10,10c0,5.53516 -4.46484,10 -10,10c-5.53516,0 -10,-4.46484 -10,-10c0,-5.53516 4.46484,-10 10,-10zM15,8v9h7v-2h-5v-7z"
+                  ></path>
+                </g>
+              </g>
+            </svg>
+            } @else {
+            {{ getRoadmapStepIcon(pullRequest, 4) }}
+            }
+          </div>
+        </div>
       </div>
     </div>
 

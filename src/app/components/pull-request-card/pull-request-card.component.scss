@@ -191,6 +191,199 @@
       }
     }
 
+    .pr-roadmap-section {
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: #fafafa;
+      border: 1px solid #edebe9;
+      border-radius: 6px;
+
+      .roadmap-steps {
+        display: flex;
+        align-items: center;
+        gap: 0;
+      }
+
+      .roadmap-step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 8px 12px;
+        background: white;
+        border: 2px solid #e1e5e9;
+        border-radius: 6px;
+        flex: 1;
+        min-width: 0;
+        position: relative;
+        transition: all 0.3s ease;
+        height: 62px;
+        .step-number {
+          width: 24px;
+          height: 24px;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          font-size: 0.75rem;
+          flex-shrink: 0;
+          background: #e1e5e9;
+          color: #323130;
+          transition: all 0.3s ease;
+        }
+
+        .step-content {
+          flex: 1;
+          min-width: 0;
+
+          .step-title {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #323130;
+            margin-bottom: 0.25rem;
+          }
+
+          .step-status {
+            font-size: 0.75rem;
+            color: #605e5c;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+          }
+
+          .reviewer-avatars-inline {
+            display: inline-flex;
+            gap: 0.3rem;
+            align-items: center;
+
+            .reviewer-avatar-container {
+              display: flex;
+              align-items: center;
+              gap: 0.3rem;
+              padding: 2px;
+              padding-right: 6px;
+              border-radius: 12px;
+              cursor: pointer;
+              transition: all 0.2s ease;
+
+              &:hover {
+                transform: scale(1.05);
+              }
+
+              &[data-status="approved"] {
+                background-color: #107c10;
+              }
+
+              &[data-status="rejected"] {
+                background-color: #d13438;
+              }
+
+              &[data-status="waiting"] {
+                background-color: #8a8886;
+              }
+
+              .reviewer-avatar {
+                width: 18px;
+                height: 18px;
+                border-radius: 9px;
+                object-fit: cover;
+                border: 2px solid white;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                flex-shrink: 0;
+              }
+
+              .status-indicator {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 10px;
+                font-weight: bold;
+                line-height: 1;
+
+                .status-icon {
+                  line-height: 1;
+                }
+              }
+            }
+          }
+        }
+
+        .step-indicator {
+          font-size: 1.2rem;
+          font-weight: bold;
+          flex-shrink: 0;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #8a8886;
+        }
+
+        &.completed {
+          border-color: #107c10;
+          background: #f3faf3;
+
+          .step-number {
+            background: #d4f3d4;
+            color: #107c10;
+          }
+
+          .step-indicator {
+            color: #107c10;
+          }
+
+          .step-title {
+            color: #107c10;
+          }
+        }
+
+        &.current {
+          border-color: #0078d4;
+          background: #f0f7ff;
+          box-shadow: 0 2px 8px rgba(0, 120, 212, 0.2);
+
+          .step-number {
+            background: #cce4ff;
+            color: #0078d4;
+          }
+
+          .step-indicator {
+            color: #0078d4;
+          }
+
+          .step-title {
+            color: #0078d4;
+          }
+        }
+
+        &.pending {
+          .step-number {
+            background: #f3f2f1;
+            color: #605e5c;
+          }
+
+          .step-indicator {
+            color: #8a8886;
+          }
+        }
+      }
+
+      .roadmap-connector {
+        width: 20px;
+        height: 2px;
+        background: #e1e5e9;
+        flex-shrink: 0;
+        transition: all 0.3s ease;
+
+        &.completed {
+          background: #107c10;
+        }
+      }
+    }
+
     .pr-status-section {
       margin-bottom: 1rem;
       padding: 0.75rem;
@@ -567,6 +760,23 @@
       .pr-meta {
         flex-direction: column;
         gap: 0.5rem;
+      }
+
+      .pr-roadmap-section {
+        .roadmap-steps {
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .roadmap-connector {
+          width: 2px;
+          height: 16px;
+          margin: 0 auto;
+        }
+
+        .roadmap-step {
+          width: 100%;
+        }
       }
 
       .pr-status-section {

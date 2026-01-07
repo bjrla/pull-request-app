@@ -24,4 +24,14 @@ exports.applications = [
     path: "../../../../../Work/X5K7.OutgoingPayments.WebApp/src/environments/environment.ts",
     tokenProperty: "overrideToken",
   },
+  {
+    appName: "graphQLClient",
+    path: "../../../../../Work/IB-SS.GraphQL/bruno/environments/LOCAL.bru",
+    tokenProperty: "authorization",
+    customReplacer: (token, fileContents) =>
+      fileContents.replace(
+        /authorization: Bearer .*/,
+        `authorization: Bearer ${token}`
+      ),
+  },
 ];

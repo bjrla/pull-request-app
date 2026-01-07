@@ -373,4 +373,69 @@ export class PullRequestCardComponent implements OnInit {
     candidates.sort((a, b) => b.score - a.score);
     return [candidates[0].pr];
   }
+
+  // Roadmap methods
+  isRoadmapStepComplete(pr: PullRequest, step: number): boolean {
+    switch (step) {
+      case 1:
+        // Step 1: No merge conflicts
+        return pr.mergeStatus?.toLowerCase() === "succeeded";
+      case 2:
+        // Step 2: No unresolved comments
+        return (pr.unresolvedCommentCount || 0) === 0;
+      case 3:
+        // Step 3: All reviewers approved (at least 2 reviewers and all approved)
+        if (!pr.reviewers || pr.reviewers.length < 2) return false;
+        const approved = pr.reviewers.filter((r: any) => r.vote === 10).length;
+        return approved >= 2 && approved === pr.reviewers.length;
+      case 4:
+        // Step 4: Merged
+        return pr.status === "completed";
+      default:
+        return false;
+    }
+  }
+
+  getRoadmapStepClass(pr: PullRequest, step: number): string {
+    if (this.isRoadmapStepComplete(pr, step)) {
+      return "completed";
+    }
+
+    // Check if this is the current step (previous steps are complete, this one is not)
+    let allPreviousComplete = true;
+    for (let i = 1; i < step; i++) {
+      if (!this.isRoadmapStepComplete(pr, i)) {
+        allPreviousComplete = false;
+        break;
+      }
+    }
+
+    if (allPreviousComplete && !this.isRoadmapStepComplete(pr, step)) {
+      return "current";
+    }
+
+    return "pending";
+  }
+
+  getRoadmapStepIcon(pr: PullRequest, step: number): string {
+    if (this.isRoadmapStepComplete(pr, step)) {
+      return "✓";
+    }
+
+    const stepClass = this.getRoadmapStepClass(pr, step);
+    if (stepClass === "current") {
+      return "⏱";
+    }
+
+    return "○";
+  }
+
+  getReviewerCountText(pr: PullRequest): string {
+    if (!pr.reviewers || pr.reviewers.length === 0) {
+      return "0/2";
+    }
+
+    const approved = pr.reviewers.filter((r: any) => r.vote === 10).length;
+    return `${approved}/2`;
+  }
 }
