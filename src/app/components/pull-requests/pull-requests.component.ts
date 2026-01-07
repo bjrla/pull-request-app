@@ -433,7 +433,11 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     // Decode first to handle already-encoded values, then encode to ensure proper encoding
     const decodedProject = decodeURIComponent(project || "");
     const decodedRepo = decodeURIComponent(repo);
-    const url = `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${encodeURIComponent(decodedProject)}/_git/${encodeURIComponent(decodedRepo)}/pullrequest/${prId}`;
+    const url = `${AZURE_DEVOPS_CONFIG.baseUrl}/${
+      AZURE_DEVOPS_CONFIG.organization
+    }/${encodeURIComponent(decodedProject)}/_git/${encodeURIComponent(
+      decodedRepo
+    )}/pullrequest/${prId}`;
     window.open(url, "_blank");
   }
 
@@ -462,7 +466,11 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
     // Decode first to handle already-encoded values, then encode to ensure proper encoding
     const decodedProjectName = decodeURIComponent(projectName);
     const decodedRepositoryName = decodeURIComponent(repositoryName);
-    const url = `${AZURE_DEVOPS_CONFIG.baseUrl}/${AZURE_DEVOPS_CONFIG.organization}/${encodeURIComponent(decodedProjectName)}/_git/${encodeURIComponent(decodedRepositoryName)}/pullrequests?_a=mine`;
+    const url = `${AZURE_DEVOPS_CONFIG.baseUrl}/${
+      AZURE_DEVOPS_CONFIG.organization
+    }/${encodeURIComponent(decodedProjectName)}/_git/${encodeURIComponent(
+      decodedRepositoryName
+    )}/pullrequests?_a=mine`;
     window.open(url, "_blank");
   }
 
@@ -489,12 +497,12 @@ export class PullRequestsComponent implements OnInit, OnDestroy {
       const decodedProjectName = decodeURIComponent(projectName);
       const repositoryName = pr.repository.name;
       const decodedRepositoryName = decodeURIComponent(repositoryName);
-      
+
       const prUrl = `${AZURE_DEVOPS_CONFIG.baseUrl}/${
         AZURE_DEVOPS_CONFIG.organization
-      }/${encodeURIComponent(decodedProjectName)}/_git/${encodeURIComponent(decodedRepositoryName)}/pullrequest/${
-        pr.pullRequestId
-      }`;
+      }/${encodeURIComponent(decodedProjectName)}/_git/${encodeURIComponent(
+        decodedRepositoryName
+      )}/pullrequest/${pr.pullRequestId}`;
 
       // Create the PR message content
       message = `🆕 ${pr.title}
@@ -518,12 +526,12 @@ Please review! 🙏`;
         const decodedProjectName = decodeURIComponent(projectName);
         const repositoryName = pr.repository.name;
         const decodedRepositoryName = decodeURIComponent(repositoryName);
-        
+
         const prUrl = `${AZURE_DEVOPS_CONFIG.baseUrl}/${
           AZURE_DEVOPS_CONFIG.organization
-        }/${encodeURIComponent(decodedProjectName)}/_git/${encodeURIComponent(decodedRepositoryName)}/pullrequest/${
-          pr.pullRequestId
-        }`;
+        }/${encodeURIComponent(decodedProjectName)}/_git/${encodeURIComponent(
+          decodedRepositoryName
+        )}/pullrequest/${pr.pullRequestId}`;
 
         const emojiNumber = index === 0 ? "1️⃣" : "2️⃣";
         message += `${emojiNumber} ${pr.title}
