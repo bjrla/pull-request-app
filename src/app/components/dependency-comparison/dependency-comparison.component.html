@@ -1,0 +1,188 @@
+<div class="dependency-comparison-container">
+  <div class="header-section">
+    <div class="stats-bar">
+      <div class="stats-info">
+        <div class="stat-item">
+          <span class="stat-label">Projects:</span>
+          <span class="stat-value">{{ getProjectCount() }}</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Dependencies:</span>
+          <span class="stat-value">{{ getDependencyCount() }}</span>
+        </div>
+        <div class="stat-item" *ngIf="getConflictCount() > 0">
+          <span class="stat-label">Version Conflicts:</span>
+          <span class="stat-value conflict">{{ getConflictCount() }}</span>
+        </div>
+      </div>
+
+      <div class="stats-actions">
+        <button
+          class="export-btn"
+          (click)="exportToExcel()"
+          [disabled]="dependencies.length === 0"
+        >
+          <svg viewBox="0 0 24 24" class="export-icon">
+            <path
+              d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M12,19L8,15H10.5V12H13.5V15H16L12,19Z"
+              fill="currentColor"
+            />
+          </svg>
+          Export to Excel
+        </button>
+
+        <button class="add-project-btn" (click)="openAddProjectModal()">
+          + Add Project
+        </button>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (ngModelChange)="onSearchChange()"
+          placeholder="Search dependencies..."
+          class="search-input"
+        />
+      </div>
+
+      <label class="toggle-label">
+        <input
+          type="checkbox"
+          [(ngModel)]="showOnlyDifferences"
+          (change)="toggleDifferenceFilter()"
+        />
+        <span>Show only conflicts</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="projects-section" *ngIf="projects.length > 0">
+    <h3>Projects</h3>
+    <div class="projects-list">
+      <div class="project-item" *ngFor="let project of projects">
+        <span class="project-name">{{ project.projectName }}</span>
+        <button class="remove-btn" (click)="removeProject(project.projectPath)">
+          ×
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-section">
+    <div *ngIf="projects.length === 0" class="empty-state">
+      <div class="empty-icon">📦</div>
+      <h2>No Projects Added</h2>
+      <p>Add projects to compare their dependencies</p>
+      <button class="add-project-btn-large" (click)="openAddProjectModal()">
+        + Add Your First Project
+      </button>
+    </div>
+
+    <div
+      *ngIf="projects.length > 0 && dependencies.length === 0"
+      class="empty-state"
+    >
+      <div class="empty-icon">🔍</div>
+      <h2>No Dependencies Found</h2>
+      <p *ngIf="showOnlyDifferences">
+        No version conflicts detected. Try disabling the filter.
+      </p>
+      <p *ngIf="!showOnlyDifferences && searchTerm">
+        No dependencies match your search.
+      </p>
+    </div>
+
+    <div *ngIf="dependencies.length > 0" class="dependencies-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Package</th>
+            <th class="sortable-header" (click)="toggleSort()">
+              Version Count
+              <span class="sort-indicator" *ngIf="sortDirection === 'desc'"
+                >▼</span
+              >
+              <span class="sort-indicator" *ngIf="sortDirection === 'asc'"
+                >▲</span
+              >
+            </th>
+            <th>Projects</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of tableRows">
+            <td
+              *ngIf="row.isFirstRow"
+              [attr.rowspan]="row.rowspan"
+              class="package-cell"
+            >
+              {{ row.packageName }}
+            </td>
+            <td class="version-cell">{{ row.version }}</td>
+            <td class="projects-cell">
+              <span
+                class="project-badge"
+                *ngFor="let project of row.projects"
+                [style.background-color]="getProjectColor(project).background"
+                [style.color]="getProjectColor(project).color"
+                >{{ project }}</span
+              >
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add Project Modal -->
+<div
+  class="modal-overlay"
+  *ngIf="isAddingProject"
+  (click)="closeAddProjectModal()"
+>
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Add Project</h2>
+      <button class="close-btn" (click)="closeAddProjectModal()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="projectName">Project Name</label>
+        <input
+          id="projectName"
+          type="text"
+          [(ngModel)]="newProjectName"
+          placeholder="My Project"
+          class="form-input"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="packageJson">package.json Content</label>
+        <textarea
+          id="packageJson"
+          [(ngModel)]="newProjectPackageJson"
+          placeholder="Paste your package.json content here..."
+          class="form-textarea"
+          rows="15"
+        ></textarea>
+      </div>
+
+      <div class="error-message" *ngIf="addProjectError">
+        {{ addProjectError }}
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="closeAddProjectModal()">
+        Cancel
+      </button>
+      <button class="btn-add" (click)="addProject()">Add Project</button>
+    </div>
+  </div>
+</div>
